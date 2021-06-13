@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2021 Malte Kliemann, Ole Kliemann
+# 
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+dist: bionic
+language: python
+python:
+  - "3.7"
+  - "3.9"
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install libclang-7-dev
+  - export CLANG_LIBRARY_FILE=/usr/lib/llvm-7/lib/libclang.so
+  - pip install flake8
+  - pip install reuse
+install:
+  - flake8 src/drmock-gen
+  - flake8 src/drmock/*
+  - reuse lint
+  - pip install -r requirements.txt
+  - pip install .
+script:
+  - pytest -vv tests/

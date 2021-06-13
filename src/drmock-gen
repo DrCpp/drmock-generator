@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+# SPDX-FileCopyrightText: 2021 Malte Kliemann, Ole Kliemann
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+from __future__ import annotations
+
+import sys
+
+from drmock import frontend
+from drmock import generator
+from drmock import utils
+
+
+def main():
+    # TODO What happens if required parameter is not specified?
+    try:
+        args, compiler_flags = frontend.parse_args(sys.argv[1:])
+        generator.main(args, compiler_flags)
+    except utils.DrMockRuntimeError as e:  # FIXME _Don't_ print traceback on clang errors, etc.!
+        print(f'drmock-gen: error: {e}\n', file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
