@@ -51,4 +51,4 @@ jobs:
       - name: tests
         run: pytest -vv tests/
         env:
-          CLANG_LIBRARY_FILE: C:\Program Files (x86)\LLVM\lib\libclang.dll
+          CLANG_LIBRARY_FILE: C:\Program Files\LLVM\bin\libclang.dll
