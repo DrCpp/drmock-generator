@@ -51,6 +51,8 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install .
+      - name: foo
+        run: drmock-gen
       - name: tests
         run: pytest -vv tests/
         env:
