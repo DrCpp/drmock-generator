@@ -32,4 +32,4 @@ jobs:
       - name: tests
         run: pytest -vv tests/
         env:
-          CLANG_LIBRARY_FILE=/usr/lib/llvm-7/lib/libclang.so
+          CLANG_LIBRARY_FILE: /usr/lib/llvm-7/lib/libclang.so
