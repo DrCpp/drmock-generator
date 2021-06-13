@@ -9,6 +9,14 @@ on:
   - workflow_dispatch
 
 jobs:
+  check license stubs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: fetch dependencies
+        run: pip install reuse
+      - name: check licenses
+        run: reuse lint
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -17,6 +25,22 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libclang-7-dev
+      - name: install
+        run: |
+          pip install -r requirements.txt
+          pip install .
+      - name: tests
+        run: pytest -vv tests/
+        env:
+          CLANG_LIBRARY_FILE: /usr/lib/llvm-7/lib/libclang.so
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: crazy-max/ghaction-chocolatey@v1
+      - name: fetch dependencies
+        run: |
+          choco install llvm
           pip install reuse
       - name: check license stubs
         run: reuse lint
@@ -27,4 +51,4 @@ jobs:
       - name: tests
         run: pytest -vv tests/
         env:
-          CLANG_LIBRARY_FILE: /usr/lib/llvm-7/lib/libclang.so
+          CLANG_LIBRARY_FILE: foo
