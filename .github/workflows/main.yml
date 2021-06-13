@@ -37,6 +37,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
       - uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: -h
