@@ -50,6 +50,6 @@ jobs:
           pip install -r requirements.txt
           pip install .
       - name: Tests
-        run: pytest -vv tests/
+        run: pytest -vv tests/test_drmock_gen.py
         env:
           CLANG_LIBRARY_FILE: C:\Program Files\LLVM\bin\libclang.dll
