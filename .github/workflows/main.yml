@@ -21,15 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: fetch dependencies
+      - name: Fetch dependencies
         run: |
           sudo apt-get update
           sudo apt-get install libclang-7-dev
-      - name: install
+      - name: Install
         run: |
           pip install -r requirements.txt
           pip install .
-      - name: tests
+      - name: Tests
         run: pytest -vv tests/
         env:
           CLANG_LIBRARY_FILE: /usr/lib/llvm-7/lib/libclang.so
@@ -43,15 +43,13 @@ jobs:
       - uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: -h
-      - name: fetch dependencies
-        run: choco install llvm
-      - name: install
+      # - name: Fetch dependencies
+      #   run: choco install llvm
+      - name: Install
         run: |
           pip install -r requirements.txt
           pip install .
-      - name: foo
-        run: drmock-genfdjaklsjflk
-      - name: tests
+      - name: Tests
         run: pytest -vv tests/
         env:
           CLANG_LIBRARY_FILE: C:\Program Files\LLVM\bin\libclang.dll
