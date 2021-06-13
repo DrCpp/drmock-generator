@@ -44,15 +44,13 @@ jobs:
         with:
           args: -h
       - name: fetch dependencies
-        run: |
-          choco install llvm
-          pip install reuse
+        run: choco install llvm
       - name: install
         run: |
           pip install -r requirements.txt
           pip install .
       - name: foo
-        run: drmock-gen
+        run: drmock-genfdjaklsjflk
       - name: tests
         run: pytest -vv tests/
         env:
