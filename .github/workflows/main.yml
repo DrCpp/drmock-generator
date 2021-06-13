@@ -44,8 +44,6 @@ jobs:
         run: |
           choco install llvm
           pip install reuse
-      - name: check license stubs
-        run: reuse lint
       - name: install
         run: |
           pip install -r requirements.txt
