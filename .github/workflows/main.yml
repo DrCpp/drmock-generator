@@ -21,8 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          args: -h
       - name: fetch dependencies
         run: |
           sudo apt-get update
@@ -40,6 +38,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: -h
       - name: fetch dependencies
         run: |
           choco install llvm
