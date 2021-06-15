@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2021 Malte Kliemann, Ole Kliemann
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: windows (install, test)
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: -h
+      # - name: Fetch dependencies
+      #   run: choco install llvm
+      - name: Install
+        run: |
+          pip install wheel
+          pip install -r requirements.txt
+          pip install .
+      - name: Tests
+        run: pytest -vv tests/test_drmock_gen.py
+        env:
+          CLANG_LIBRARY_FILE: C:\Program Files\LLVM\bin\libclang.dll

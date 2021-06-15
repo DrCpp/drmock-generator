@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2021 Malte Kliemann, Ole Kliemann
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Check license stubs
+
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+  workflow_dispatch:
+
+jobs:
+  check-license-stubs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: fetch dependencies
+        run: pip install reuse
+      - name: check licenses
+        run: reuse lint

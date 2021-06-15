@@ -6,7 +6,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # drmock generator
 
-[![Build Status](https://travis-ci.com/DrCpp/drmock-gen.svg?token=Von7vVT1TzNg3szePQ58&branch=master)](https://travis-ci.com/DrCpp/drmock-gen)
+![unix](https://github.com/github/docs/actions/workflows/unix.yml/badge.svg)
+![windows](https://github.com/github/docs/actions/workflows/windows.yml/badge.svg)
 
 ## Testing
 
