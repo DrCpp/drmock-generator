@@ -4,7 +4,7 @@
 
 import pytest
 
-from drmock import frontend
+from drmock import commandline
 
 
 @pytest.mark.skip

@@ -5,11 +5,17 @@
 from setuptools import setup
 
 
-setup(name='drmock-generator',
-      author='Malte Kliemann, Ole Kliemann',
-      version='1.0.0',
-      packages=['drmock'],
-      package_dir={'': 'src'},
-      scripts=['src/drmock-gen'],
-      include_package_data=True,
-      python_requires='>=3.7',)
+setup(
+    name='drmock-generator',
+    author='Malte Kliemann, Ole Kliemann',
+    version='1.0.0',
+    packages=['drmock'],
+    package_dir={'': 'src'},
+    entry_points={
+        'console_scripts': [
+            'drmock-gen = drmock.commandline:main'
+        ]
+    },
+    include_package_data=True,
+    python_requires='>=3.7',
+)

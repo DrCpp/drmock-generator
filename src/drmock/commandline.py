@@ -10,6 +10,9 @@ import os
 import subprocess
 import sys
 
+from drmock import generator
+from drmock import utils
+
 
 _parser = argparse.ArgumentParser(
     description='Create mock object .h and .cpp files',
@@ -61,3 +64,13 @@ def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
         compiler_flags.append(sdk)
 
     return args, compiler_flags
+
+
+def main():
+    # TODO What happens if required parameter is not specified?
+    try:
+        args, compiler_flags = parse_args(sys.argv[1:])
+        generator.main(args, compiler_flags)
+    except utils.DrMockRuntimeError as e:  # FIXME _Don't_ print traceback on clang errors, etc.!
+        print(f'drmock-gen: error: {e}\n', file=sys.stderr)
+        sys.exit(1)
