@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+"""For gathering info about nodes."""
+
 from __future__ import annotations
 
 import functools
@@ -9,7 +11,6 @@ from typing import Callable, Optional
 
 import clang.cindex
 
-from drmock import translator
 from drmock import utils
 
 WIDTH = 4

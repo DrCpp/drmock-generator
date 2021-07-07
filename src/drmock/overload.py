@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+"""For mocking overloaded C++ methods."""
+
 from __future__ import annotations
 
 import copy

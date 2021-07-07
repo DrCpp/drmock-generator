@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+"""Commandline client for drmock generator."""
+
 from __future__ import annotations
 
 import argparse

@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+"""Classes for C++ AST node infos."""
+
 from __future__ import annotations
 
 import copy

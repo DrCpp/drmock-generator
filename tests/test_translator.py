@@ -11,7 +11,6 @@ import pytest
 from typing import List, Optional
 
 from drmock import utils
-from drmock import debug
 from drmock import translator
 
 

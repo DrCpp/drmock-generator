@@ -2,9 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Configurable generator object???
-
-"""
+"""The main generator function."""
 
 from __future__ import annotations
 
@@ -301,15 +299,3 @@ def _generate_mock_object_full_class_name(class_: types.Class):
     if class_.template:
         result += utils.template(class_.template.get_args())
     return result
-
-
-# NOTE
-#
-# What happens when we mock:
-#
-# - virtual public methods get mocked
-# - virtual protected and private methods get mocked as public methods
-#   [in the mock implementation] and remain protected/private in the mock
-#   object (optional!)
-# - private using declarations are copied to the top of class
-# - static functions are skipped (they're not virtual)

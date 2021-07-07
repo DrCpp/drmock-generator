@@ -7,7 +7,7 @@ import os
 import clang.cindex
 import pytest
 
-from drmock import debug
+from drmock import _debug
 from drmock import translator
 
 PATH = 'dummy.h'
@@ -54,6 +54,6 @@ PATH = 'dummy.h'
 def test_dump_tree(source, expected, capsys, set_library_file):
     index = clang.cindex.Index.create()
     node = translator.translate(PATH, source, ['--std=c++17'])
-    debug.print_tree(node)
+    _debug.print_tree(node)
     captured = capsys.readouterr()
     assert captured.out == expected
