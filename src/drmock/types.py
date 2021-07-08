@@ -310,6 +310,42 @@ class TemplateDecl:  # For TemplateDeclaration
         return result
 
 
+class Constructor:
+
+    def __init__(self, name: str, params: Optional[Sequence[Union[str, Type]]] = None, template: Optional[TemplateDecl] = None, initializer_list: Optional[Sequence[str]] = None, body: str = '', access: str = 'public'):
+        self._name = name
+        if params is not None:
+            self._params = params
+        else:
+            self._params = []
+        self._template = template
+        if initializer_list is not None:
+            self._initializer_list = initializer_list
+        else:
+            self._initializer_list = []
+        self._body = body
+        self._access = access
+
+    @property
+    def access(self) -> str:
+        return self._access
+
+    def __str__(self) -> str:
+        result = ''
+        if self._template:
+            result += str(self._template) + '\n'
+        result += self._name
+        params = ', '.join(str(each) for each in self._params)
+        result += f'({params})'
+        if self._initializer_list:
+            result += ' : ' + ', '.join(self._initializer_list)
+        result += '\n'
+        result += '\n{\n'
+        result += utils.indent(self._body)
+        result += '\n}'
+        return result
+
+
 @dataclasses.dataclass
 class Method:
     """Class for representing C++ class methods.
@@ -508,7 +544,7 @@ class Class:
     # the order of members may be changed. Also, we don't check for base classes.
     name: str
     enclosing_namespace: list[str] = dataclasses.field(default_factory=list)
-    members: list[Union[Method, Variable]] = dataclasses.field(
+    members: list[Union[Constructor, Method, Variable]] = dataclasses.field(
         default_factory=list)  # Methods, variables, type aliases!
     final: bool = False
     q_object: bool = False

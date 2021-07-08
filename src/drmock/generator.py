@@ -227,9 +227,11 @@ def _generate_mock_implementation(name: str, class_: types.Class) -> types.Class
 
     # Set the class as parent for all methods.
     overloads = overload.get_overloads_of_class(class_)  # FIXME Add access_specs to function call.
-    ctor_body = '\n'.join(sum([each.generate_set_parent() for each in overloads], []))
-    ctor = types.Method(name=name, return_type='', body=ctor_body, access='public')
-    result.members.append(ctor)
+    default_ctor = types.Constructor(
+        name=name,
+        body='\n'.join(sum([each.generate_set_parent() for each in overloads], []))
+    )
+    result.members.append(default_ctor)
 
     mock_implementation = types.Variable(name=overload.MOCK_OBJECT_NAME,
                                          type=_generate_mock_object_full_class_name(class_),
