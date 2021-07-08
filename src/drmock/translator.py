@@ -2,7 +2,12 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""libclang wrapper module."""
+"""libclang wrapper module.
+
+This module translates a C++ source into the corresponding AST using the
+``translate``. Before calling ``translate``, you must set the path to
+the ``libclang.dll/.so/.dylib`` _file_ using ``set_library_file``.
+"""
 
 from __future__ import annotations
 
@@ -66,15 +71,29 @@ def translate_file(path: str, compiler_flags: Optional[list[str]] = None) -> Nod
 
 
 def translate(path: str, source: str, compiler_flags: Optional[list[str]] = None) -> Node:
-    """
+    """Translate a string with C++ code into its AST.
 
-    Note: ``path`` need not be a real path, provided that ``source`` is
-    specified! Observe that ``path`` is mentioned in the diagnostics.
+    Args:
+        path: The path of the parsed file
+        source: The C++ source
+        compiler_flags: A list of compiler flags used for parsing
+
+    Raises:
+        clang.cindex.LibclangError:
+            If the libclang path is not set or not found (see
+            ``set_library_file``)
+        utils.DrMockRuntimeError:
+            If ``path`` is empty
+
+    Note: The ``path`` parameter is required due to ``clang`` details.
+    It need not be a real path, but it must be non-empty. Choosing a
+    unique name is useful, as it is used in clang's diagnostics.
     """
     if not path:
-        raise utils.DrMockRuntimeError(f'Invalid filename: {path}')
+        raise utils.DrMockRuntimeError(
+            "translate failed: Parameter 'path' is empty. Expected non-empty string")
 
-    if not compiler_flags:
+    if compiler_flags is None:
         compiler_flags = []
 
     index = clang.cindex.Index.create()
