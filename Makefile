@@ -11,7 +11,7 @@ default: venv
 	pytest -vv tests/
 
 install:
-	python setup.py install
+	pip install .
 
 venv:
 	mkdir -p build
