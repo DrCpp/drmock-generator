@@ -36,13 +36,25 @@ def _dump_cxx_method(node: translator.Node) -> None:
 
 
 @_indent
+def _dump_type_ref(node: translator.Node) -> None:
+    lines = [_dump_basic(node)]
+    lines.append(WIDTH * ' ' + 'spelling: ' + str(node.cursor.spelling))
+    lines.append(WIDTH * ' ' + 'type.spelling: ' + str(node.cursor.type.spelling))
+    return '\n'.join(lines)
+
+
+@_indent
 def _dump_basic(node: translator.Node) -> None:
     return str(node.cursor.kind)
 
 
-def print_tree(root: translator.Node) -> None:
-    DISPATCH = {clang.cindex.CursorKind.CXX_METHOD: _dump_cxx_method}
+DISPATCH = {
+    clang.cindex.CursorKind.CXX_METHOD: _dump_cxx_method,
+    clang.cindex.CursorKind.TYPE_REF: _dump_type_ref,
+}
 
+
+def print_tree(root: translator.Node) -> None:
     def dump_func(node, depth):
         print(DISPATCH.get(node.cursor.kind, _dump_basic)(node, depth))
     _visit_tree(root, dump_func)

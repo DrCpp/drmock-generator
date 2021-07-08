@@ -42,6 +42,8 @@ PATH = 'dummy.h'
      "        CursorKind.TEMPLATE_TYPE_PARAMETER\n"
      "        CursorKind.CXX_BASE_SPECIFIER\n"
      "            CursorKind.TYPE_REF\n"
+     "                spelling: class Base\n"
+     "                type.spelling: Base\n"
      "        CursorKind.CXX_ACCESS_SPEC_DECL\n"
      "        CursorKind.CXX_METHOD\n"
      "            get_tokens(): ['virtual', 'int', 'virtual_method', '(', 'float', ',', 'double', ')', 'const']\n"
