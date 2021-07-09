@@ -339,7 +339,6 @@ class Constructor:
         result += f'({params})'
         if self._initializer_list:
             result += ' : ' + ', '.join(self._initializer_list)
-        result += '\n'
         result += '\n{\n'
         result += utils.indent(self._body)
         result += '\n}'
