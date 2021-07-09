@@ -22,6 +22,7 @@ METHOD_CPP_CLASS = 'drmock::Method'
 INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS_'
 DRMOCK_INCLUDE_PATH = 'DrMock/'
 MACRO_PREFIX = 'DRMOCK_'
+FORWARDING_CTOR_TEMPLATE_PARAMS = MACRO_PREFIX + '_FORWARDING_CTOR_TS'
 
 
 def main(args: str, compiler_flags: list[str]) -> None:
@@ -229,6 +230,9 @@ def _generate_mock_implementation(name: str, class_: types.Class) -> types.Class
     overloads = overload.get_overloads_of_class(class_)  # FIXME Add access_specs to function call.
     default_ctor = types.Constructor(
         name=name,
+        template=types.TemplateDecl([f'... {FORWARDING_CTOR_TEMPLATE_PARAMS}']),
+        params=[f'{FORWARDING_CTOR_TEMPLATE_PARAMS}&&... ts'],
+        initializer_list=[result.parent + '{' + f'std::forward<{FORWARDING_CTOR_TEMPLATE_PARAMS}>(ts)...' + '}'],
         body='\n'.join(sum([each.generate_set_parent() for each in overloads], []))
     )
     result.members.append(default_ctor)
