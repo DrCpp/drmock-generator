@@ -32,7 +32,7 @@ class TestNode:
     # is that mocking an entire tree of translator.Node objects will
     # result in unreadable tests which verify too much imperative and
     # too little function.
-    def test_find_matching_class(self):
+    def test_find_matching_class(self, set_library_file):
         source = ('namespace outer {\n'
                   '\n'
                   'class A {};\n'

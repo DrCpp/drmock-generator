@@ -13,6 +13,7 @@ from drmock import translator
 PATH = 'dummy.h'
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize('source, expected', [
     ('class A {\n'
      '  void f(int x, float y) {\n'
