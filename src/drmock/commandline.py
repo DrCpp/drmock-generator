@@ -48,9 +48,9 @@ def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
     # Mock all public virtual functions by default, unless -a=private
     _parser.add_argument('--access', '-a', default=['public', 'protected', 'private'],
                          help='only mock virtual functions with the specified access specs')
-    # Mock a selection of virtual functions if -m/--methods=
-    _parser.add_argument('--methods', '-m', default=[],
-                         help='only mock specified virtual functions')
+    # # Mock a selection of virtual functions if -m/--methods=
+    # _parser.add_argument('--methods', '-m', default=[],
+    #                      help='only mock specified virtual functions')
 
     _parser.add_argument('--clang-library-file',
                          default=os.environ.get('CLANG_LIBRARY_FILE', None),
@@ -69,7 +69,6 @@ def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
 
 
 def main():
-    # TODO What happens if required parameter is not specified?
     try:
         args, compiler_flags = parse_args(sys.argv[1:])
         generator.main(args, compiler_flags)
