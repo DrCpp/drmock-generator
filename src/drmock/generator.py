@@ -82,8 +82,8 @@ def _main_impl(args: str, compiler_flags: list[str], input_header) -> tuple[str,
 
     mock_implementation_name = utils.swap(args.input_class, args.output_class, class_.name)
 
-    mock_object = _generate_mock_object(class_)
-    mock_implementation = _generate_mock_implementation(mock_implementation_name, class_)
+    mock_object = _generate_mock_object(class_, args.access)
+    mock_implementation = _generate_mock_implementation(mock_implementation_name, class_, args.access)
 
     new_header = _generate_header(class_, mock_object, mock_implementation, args.input_path)
     new_source = _generate_source(class_, args.output_path)
@@ -147,11 +147,11 @@ def _generate_source(class_: types.Class, header_path: str) -> str:
     return result
 
 
-def _generate_mock_object(class_: types.Class) -> types.Class:
+def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class:
     result = types.Class(_generate_mock_object_class_name(class_))
     result.enclosing_namespace = MOCK_OBJECT_ENCLOSING_NAMESPACE
     result.template = class_.template
-    overloads = overload.get_overloads_of_class(class_)  # FIXME Add access_specs to function call.
+    overloads = overload.get_overloads_of_class(class_, access)
 
     type_aliases = class_.get_type_aliases()
     for each in type_aliases:
@@ -216,7 +216,7 @@ def _generate_mock_object(class_: types.Class) -> types.Class:
     return result
 
 
-def _generate_mock_implementation(name: str, class_: types.Class) -> types.Class:
+def _generate_mock_implementation(name: str, class_: types.Class, access: list[str]) -> types.Class:
     result = types.Class(name)
     result.enclosing_namespace = class_.enclosing_namespace
     result.template = class_.template
@@ -227,7 +227,7 @@ def _generate_mock_implementation(name: str, class_: types.Class) -> types.Class
     result.members = class_.get_type_aliases()
 
     # Set the class as parent for all methods.
-    overloads = overload.get_overloads_of_class(class_)  # FIXME Add access_specs to function call.
+    overloads = overload.get_overloads_of_class(class_, access)
     default_ctor = types.Constructor(
         name=name,
         template=types.TemplateDecl([f'... {FORWARDING_CTOR_TEMPLATE_PARAMS}']),
