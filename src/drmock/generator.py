@@ -83,7 +83,8 @@ def _main_impl(args: str, compiler_flags: list[str], input_header) -> tuple[str,
     mock_implementation_name = utils.swap(args.input_class, args.output_class, class_.name)
 
     mock_object = _generate_mock_object(class_, args.access)
-    mock_implementation = _generate_mock_implementation(mock_implementation_name, class_, args.access)
+    mock_implementation = _generate_mock_implementation(
+        mock_implementation_name, class_, args.access)
 
     new_header = _generate_header(class_, mock_object, mock_implementation, args.input_path)
     new_source = _generate_source(class_, args.output_path)
@@ -232,14 +233,16 @@ def _generate_mock_implementation(name: str, class_: types.Class, access: list[s
         name=name,
         template=types.TemplateDecl([f'... {FORWARDING_CTOR_TEMPLATE_PARAMS}']),
         params=[f'{FORWARDING_CTOR_TEMPLATE_PARAMS}&&... ts'],
-        initializer_list=[result.parent + '{' + f'std::forward<{FORWARDING_CTOR_TEMPLATE_PARAMS}>(ts)...' + '}'],
+        initializer_list=[
+            result.parent + '{' + f'std::forward<{FORWARDING_CTOR_TEMPLATE_PARAMS}>(ts)...' + '}'],
         body='\n'.join(sum([each.generate_set_parent() for each in overloads], []))
     )
     result.members.append(default_ctor)
 
-    mock_implementation = types.Variable(name=overload.MOCK_OBJECT_NAME,
-                                         type=_generate_mock_object_full_class_name(class_),
-                                         mutable=True)
+    mock_implementation = types.Variable(
+        name=overload.MOCK_OBJECT_NAME,
+        type=_generate_mock_object_full_class_name(class_),
+        mutable=True)
     result.members.append(mock_implementation)
 
     result.members += sum([each.generate_mock_implementations() for each in overloads], [])

@@ -19,11 +19,11 @@ import clang.cindex
 from drmock import utils
 
 DIAGNOSTIC_FORMAT_OPTIONS = (clang.cindex.Diagnostic.DisplaySourceLocation
-                             | clang.cindex.Diagnostic.DisplayColumn
-                             | clang.cindex.Diagnostic.DisplaySourceRanges
-                             | clang.cindex.Diagnostic.DisplayOption
-                             | clang.cindex.Diagnostic.DisplayCategoryId
-                             | clang.cindex.Diagnostic.DisplayCategoryName)
+                           | clang.cindex.Diagnostic.DisplayColumn
+                           | clang.cindex.Diagnostic.DisplaySourceRanges
+                           | clang.cindex.Diagnostic.DisplayOption
+                           | clang.cindex.Diagnostic.DisplayCategoryId
+                           | clang.cindex.Diagnostic.DisplayCategoryName)
 
 CLASS_CURSORS = {clang.cindex.CursorKind.CLASS_DECL, clang.cindex.CursorKind.CLASS_TEMPLATE}
 

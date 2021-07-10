@@ -278,7 +278,8 @@ class TemplateDecl:  # For TemplateDeclaration
         self.params = params
 
     def get_args(self) -> list[str]:
-        return [utils.swap(r'\.\.\. (.*)', r'\1 ...', each) if each.startswith('...') else each
+        return [utils.swap(r'\.\.\. (.*)', r'\1 ...', each)
+                if each.startswith('...') else each
                 for each in self.params]
 
     def __eq__(self, other):
@@ -312,7 +313,13 @@ class TemplateDecl:  # For TemplateDeclaration
 
 class Constructor:
 
-    def __init__(self, name: str, params: Optional[Sequence[Union[str, Type]]] = None, template: Optional[TemplateDecl] = None, initializer_list: Optional[Sequence[str]] = None, body: str = '', access: str = 'public'):
+    def __init__(self,
+                 name: str,
+                 params: Optional[Sequence[Union[str, Type]]] = None,
+                 template: Optional[TemplateDecl] = None,
+                 initializer_list: Optional[Sequence[str]] = None,
+                 body: str = '',
+                 access: str = 'public'):
         self._name = name
         if params is not None:
             self._params = params
@@ -632,8 +639,8 @@ class Class:
         field variables, etc. will *not* be transcribed into the
         ``Class`` object.
         """
-        assert node.cursor.kind in {clang.cindex.CursorKind.CLASS_DECL,
-                                    clang.cindex.CursorKind.CLASS_TEMPLATE}
+        assert node.cursor.kind in {
+            clang.cindex.CursorKind.CLASS_DECL, clang.cindex.CursorKind.CLASS_TEMPLATE}
         result = cls('T')  # Use temporary class name for init.
         result.name = node.cursor.spelling
         if node.cursor.kind == clang.cindex.CursorKind.CLASS_TEMPLATE:
@@ -641,11 +648,12 @@ class Class:
 
         access = 'private'
         for each in node.get_children():
-            IGNORED_CURSORS = {clang.cindex.CursorKind.TEMPLATE_TYPE_PARAMETER,
-                               clang.cindex.CursorKind.DESTRUCTOR,
-                               clang.cindex.CursorKind.CXX_BASE_SPECIFIER,
-                               clang.cindex.CursorKind.USING_DIRECTIVE,
-                               }
+            IGNORED_CURSORS = {
+                clang.cindex.CursorKind.TEMPLATE_TYPE_PARAMETER,
+                clang.cindex.CursorKind.DESTRUCTOR,
+                clang.cindex.CursorKind.CXX_BASE_SPECIFIER,
+                clang.cindex.CursorKind.USING_DIRECTIVE,
+            }
             if each.cursor.kind in IGNORED_CURSORS:
                 continue
 
@@ -664,10 +672,11 @@ class Class:
             if each.cursor.kind == clang.cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
                 access = _access_spec_decl_from_node(each)
 
-            TYPES = {clang.cindex.CursorKind.CXX_METHOD,
-                     clang.cindex.CursorKind.TYPE_ALIAS_TEMPLATE_DECL,
-                     clang.cindex.CursorKind.TYPE_ALIAS_DECL
-                     }
+            TYPES = {
+                clang.cindex.CursorKind.CXX_METHOD,
+                clang.cindex.CursorKind.TYPE_ALIAS_TEMPLATE_DECL,
+                clang.cindex.CursorKind.TYPE_ALIAS_DECL,
+            }
             if each.cursor.kind in TYPES:
                 member = from_node(each)
                 member.access = access
