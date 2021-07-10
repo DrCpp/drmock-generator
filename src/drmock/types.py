@@ -672,12 +672,12 @@ class Class:
             if each.cursor.kind == clang.cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
                 access = _access_spec_decl_from_node(each)
 
-            TYPES = {
+            MEMBER_TYPES = {
                 clang.cindex.CursorKind.CXX_METHOD,
                 clang.cindex.CursorKind.TYPE_ALIAS_TEMPLATE_DECL,
                 clang.cindex.CursorKind.TYPE_ALIAS_DECL,
             }
-            if each.cursor.kind in TYPES:
+            if each.cursor.kind in MEMBER_TYPES:
                 member = from_node(each)
                 member.access = access
                 result.members.append(member)

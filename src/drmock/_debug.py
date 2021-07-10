@@ -48,7 +48,7 @@ def _dump_basic(node: translator.Node) -> None:
     return str(node.cursor.kind)
 
 
-DISPATCH = {
+_DISPATCH = {
     clang.cindex.CursorKind.CXX_METHOD: _dump_cxx_method,
     clang.cindex.CursorKind.TYPE_REF: _dump_type_ref,
 }
@@ -56,7 +56,7 @@ DISPATCH = {
 
 def print_tree(root: translator.Node) -> None:
     def dump_func(node, depth):
-        print(DISPATCH.get(node.cursor.kind, _dump_basic)(node, depth))
+        print(_DISPATCH.get(node.cursor.kind, _dump_basic)(node, depth))
     _visit_tree(root, dump_func)
 
 
