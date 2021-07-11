@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import locale
 import textwrap
 import os
 import subprocess
@@ -31,37 +32,41 @@ _parser = argparse.ArgumentParser(
         The clang-library-file parameter must either be specified using
         the command line interface, or by setting the CLANG_LIBRARY_FILE
         environment variable.'''))
+_parser.add_argument('input_path',
+                     help='path to .h file containing the input class')
+_parser.add_argument('output_path',
+                     help='path to output .h')
+# NOTE It's a bit awkward to do the calculation of the mock class'
+# name _inside_ the tool, but it's the only place where we have
+# access to the mockED class.
+_parser.add_argument('--input-class', default='(.*)',
+                     help='name of the input class, default is (.*)')
+_parser.add_argument('--output-class', default=r'Mock\1',
+                     help='name of the output/mock class, default is Mock\\1')
+# Mock all public virtual functions by default, unless -a=private
+_parser.add_argument('--access', '-a', default=['public', 'protected', 'private'],
+                     help='only mock virtual functions with the specified access specs')
+# # Mock a selection of virtual functions if -m/--methods=
+# _parser.add_argument('--methods', '-m', default=[],
+#                      help='only mock specified virtual functions')
+
+_parser.add_argument('--clang-library-file',
+                     default=os.environ.get('CLANG_LIBRARY_FILE', None),
+                     help='path to the libclang .dll/.so/.dylib')
 
 
 def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
-    _parser.add_argument('input_path',
-                         help='path to .h file containing the input class')
-    _parser.add_argument('output_path',
-                         help='path to output .h')
-    # NOTE It's a bit awkward to do the calculation of the mock class'
-    # name _inside_ the tool, but it's the only place where we have
-    # access to the mockED class.
-    _parser.add_argument('--input-class', default='(.*)',
-                         help='name of the input class, default is (.*)')
-    _parser.add_argument('--output-class', default=r'Mock\1',
-                         help='name of the output/mock class, default is Mock\\1')
-    # Mock all public virtual functions by default, unless -a=private
-    _parser.add_argument('--access', '-a', default=['public', 'protected', 'private'],
-                         help='only mock virtual functions with the specified access specs')
-    # # Mock a selection of virtual functions if -m/--methods=
-    # _parser.add_argument('--methods', '-m', default=[],
-    #                      help='only mock specified virtual functions')
-
-    _parser.add_argument('--clang-library-file',
-                         default=os.environ.get('CLANG_LIBRARY_FILE', None),
-                         help='path to the libclang .dll/.so/.dylib')
 
     args, compiler_flags = _parser.parse_known_args(args)
 
     # Apply isysroot default on macOS.
     if sys.platform == 'darwin' and '-isysroot' not in compiler_flags:
         tmp = subprocess.check_output(['xcrun', '--show-sdk-path'])
-        sdk = tmp.decode(sys.stdout.encoding).rstrip('\n')
+        if sys.stdout.encoding is not None:
+            encoding = sys.stdout.encoding
+        else:
+            encoding = locale.getpreferredencoding()
+        sdk = tmp.decode(encoding).rstrip('\n')
         compiler_flags.append('-isysroot')
         compiler_flags.append(sdk)
 
