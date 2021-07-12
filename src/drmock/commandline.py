@@ -39,9 +39,9 @@ _parser.add_argument('output_path',
 # NOTE It's a bit awkward to do the calculation of the mock class'
 # name _inside_ the tool, but it's the only place where we have
 # access to the mockED class.
-_parser.add_argument('--input-class', default='(.*)',
+_parser.add_argument('--input-class', '-i', default='(.*)',
                      help='name of the input class, default is (.*)')
-_parser.add_argument('--output-class', default=r'Mock\1',
+_parser.add_argument('--output-class', '-o', default=r'Mock\1',
                      help='name of the output/mock class, default is Mock\\1')
 # Mock all public virtual functions by default, unless -a=private
 _parser.add_argument('--access', '-a', default=['public', 'protected', 'private'],
@@ -51,7 +51,7 @@ _parser.add_argument('--flags', '-f', nargs=argparse.REMAINDER, default=[], help
 # _parser.add_argument('--methods', '-m', default=[],
 #                      help='only mock specified virtual functions')
 
-_parser.add_argument('--clang-library-file',
+_parser.add_argument('--clang-library-file', '-l',
                      default=os.environ.get('CLANG_LIBRARY_FILE', None),
                      help='path to the libclang .dll/.so/.dylib')
 
