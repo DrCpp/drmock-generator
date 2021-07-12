@@ -57,7 +57,7 @@ _parser.add_argument('--clang-library-file',
 
 
 def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
-    args, _ = _parser.parse_known_args(args)
+    args = _parser.parse_args(args)
 
     # Apply isysroot default on macOS.
     if sys.platform == 'darwin' and '-isysroot' not in args.flags:
