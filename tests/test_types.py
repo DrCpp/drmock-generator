@@ -164,7 +164,7 @@ class TestTemplateDecl:
                     decoy,
                     template_type_param2]))
         template_decl = types.TemplateDecl.from_node(parent)
-        assert template_decl.params == ['T', '... Ts']
+        assert template_decl._params == ['T', '... Ts']
 
 
 class TestMethod:

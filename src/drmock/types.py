@@ -335,7 +335,7 @@ class TemplateDecl:  # For TemplateDeclaration
 
         >>> decl = TemplateDecl(['T', '... Ts'])
         """
-        self.params = params
+        self._params = params
 
     def get_args(self) -> list[str]:
         """Get the decl's args.
@@ -349,17 +349,17 @@ class TemplateDecl:  # For TemplateDeclaration
         """
         return [utils.swap(r'\.\.\. (.*)', r'\1 ...', each)
                 if each.startswith('...') else each
-                for each in self.params]
+                for each in self._params]
 
     def __eq__(self, other):
         if not isinstance(other, TemplateDecl):
             return NotImplemented
-        return self.params == other.params
+        return self._params == other._params
 
     def __str__(self):
         result = ''
         result += 'template<'
-        result += ', '.join(f'typename {each}' for each in self.params)
+        result += ', '.join(f'typename {each}' for each in self._params)
         result += '>'
         return result
 
