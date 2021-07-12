@@ -49,9 +49,8 @@ from drmock import overload
 def test_get_overloads_of_class(virtual_methods, access_specs, expected, mocker):
     class_ = mocker.Mock(get_virtual_methods=mocker.Mock(return_value=virtual_methods))
     result = overload.get_overloads_of_class(class_, access_specs)
-    for each in expected:
-        each.parent = class_
-    assert result == expected
+    for r, e in zip(result, expected):
+        assert r._methods == e._methods
 
 
 class TestOverload:

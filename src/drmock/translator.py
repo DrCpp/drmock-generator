@@ -44,17 +44,21 @@ class Node:
             cursor: The wrapper cursor
             path: The file that the cursor belongs to
         """
-        self.cursor = cursor
+        self._cursor = cursor
         self._path = path
+
+    @property
+    def cursor(self) -> clang.cindex.Cursor:
+        return self._cursor
 
     def get_children(self) -> list[Node]:
         """Get all children from the same file."""
-        return [Node(each, self._path) for each in self.cursor.get_children()
+        return [Node(each, self._path) for each in self._cursor.get_children()
                 if str(each.location.file) == self._path]
 
     def get_tokens(self) -> list[str]:
         """Get the cursor's tokens."""
-        return [each.spelling for each in self.cursor.get_tokens()]
+        return [each.spelling for each in self._cursor.get_tokens()]
 
     def find_matching_class(self,
                             regex: str,
@@ -67,7 +71,6 @@ class Node:
             regex: The regex to match the sought class' name against
             enclosing_namespace:
                 Only used for recursing, **must** not be set by the user
-
         """
         if not enclosing_namespace:
             enclosing_namespace = []

@@ -41,27 +41,24 @@ def get_overloads_of_class(class_: types.Class,
     return [Overload(class_, each) for each in collections]
 
 
-@dataclasses.dataclass
 class Overload:
     """Represents a C++ method overload.
 
-    Attributes:
-        parent: The class that owns the overloaded methods
-        methods: A collection of the methods
-
     All methods are assumed to be _non-template_!
     """
-    parent: types.Class
-    methods: Sequence[types.Method]
+
+    def __init__(self, parent: types.Class, methods: Sequence[types.Method]) -> None:
+        self._parent = parent
+        self._methods = methods
 
     def is_overload(self) -> bool:
         """Check if ``self`` is a proper overload (with at least two
         methods)."""
-        return len(self.methods) > 1
+        return len(self._methods) > 1
 
     def generate_getter(self) -> types.Method:
         """Generate the overload's template getter method."""
-        f = self.methods[0]  # Representative of the overload.
+        f = self._methods[0]  # Representative of the overload.
         result = types.Method('f')  # Use temporary dummy name for initialization!
         result.template = types.TemplateDecl([PARAMETER_PACK])
         result.name = f.mangled_name()
@@ -74,12 +71,12 @@ class Overload:
         # automatically be passed as arguments to the dispatch call.
         # NOTE When using strings, spelling differences between equal
         # types (``T *`` vs. ``T*``) can cause this part to malfunction.
-        if not self.is_overload():  # all(f.params == each.params for each in self.methods):
+        if not self.is_overload():  # all(f.params == each.params for each in self._methods):
             dispatch.extend(f.params)
 
         # If all methods are const qualified, then the const qualifier
         # must automatically be passed to the dispatch method.
-        if all(each.const for each in self.methods):
+        if all(each.const for each in self._methods):
             dispatch.append(CONST_ENUM)
 
         result.body = f'return {f.mangled_name()}_dispatch(' + TYPE_CONTAINER + \
@@ -90,8 +87,8 @@ class Overload:
     def generate_shared_ptrs(self) -> list[types.Variable]:
         """Generate the overload's ``shared_ptr<Method>`` objects."""
         result = []
-        for i, f in enumerate(self.methods):
-            template_args = [self.parent.full_name(), f.return_type]
+        for i, f in enumerate(self._methods):
+            template_args = [self._parent.full_name(), f.return_type]
             template_args.extend(each.get_decayed() for each in f.params)
 
             value_type = 'Method' + utils.template(template_args)
@@ -107,7 +104,7 @@ class Overload:
     def generate_dispatch_methods(self) -> list[types.Method]:
         """Generate the overload's dispatch methods."""
         result = []
-        for i, f in enumerate(self.methods):
+        for i, f in enumerate(self._methods):
             dispatch = types.Method('f')  # Temporary name for init.
             dispatch.name = f.mangled_name() + '_dispatch'
             dispatch.return_type = types.Type('auto', lvalue_ref=True)
@@ -130,7 +127,7 @@ class Overload:
         """Generate the mock implementations of the overload's
         functions."""
         result = []
-        for f in self.methods:
+        for f in self._methods:
             impl = copy.deepcopy(f)  # Keep name, cv qualifiers.
             impl.virtual = False
             impl.pure_virtual = False
@@ -163,7 +160,7 @@ class Overload:
         """For each function, return a C++ statement to set the parent
         class."""
         return [_generate_access(each, self.is_overload()) + '.parent(this);'
-                for each in self.methods]
+                for each in self._methods]
 
 
 def _shared_ptr_name(mangled_name: str, i: int) -> str:
