@@ -60,7 +60,9 @@ def print_tree(root: translator.Node) -> None:
     _visit_tree(root, dump_func)
 
 
-def _visit_tree(root: translator.Node, func: Callable, depth: Optional[int] = 0) -> None:
+def _visit_tree(root: translator.Node,
+                func: Callable[[translator.Node], Any],
+                depth: Optional[int] = 0) -> None:
     func(root, depth)
     for each in root.get_children():
         _visit_tree(each, func, depth + 1)

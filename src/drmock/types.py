@@ -23,18 +23,17 @@ from __future__ import annotations
 import copy
 import collections
 import dataclasses
-from typing import Any, ClassVar, Optional, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 import clang.cindex
 
 from drmock import utils
-from drmock import translator
 
 """We're using an ``OrderedDict`` to ensure that in ``Method.mangled_name``
 for example ``<=>`` is replaced _before_ ``<=`` to ensure that
 ``operator<=>`` becomes ``operatorSpaceship`` instead of
 ``operatorLesserOrEqualGreater``.
 """
-_OPERATOR_SYMBOLS: ClassVar = collections.OrderedDict([
+_OPERATOR_SYMBOLS = collections.OrderedDict([
     ('<=>', 'SpaceShip'),
     ('->*', 'PointerToMember'),
     ('co_await', 'CoAwait'),
