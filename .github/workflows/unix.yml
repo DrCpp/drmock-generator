@@ -2,12 +2,16 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-name: UNIX (install, test)
+name: Linux (install, test)
 on:
   push:
-    branches: master
+    branches:
+    - master
+    - develop
   pull_request:
-    branches: master
+    branches:
+    - master
+    - develop
   workflow_dispatch:
 
 jobs:
