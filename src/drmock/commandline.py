@@ -80,7 +80,7 @@ def main():
         # the first compiler flag of whitespace!
         if args.flags:
             args.flags[0] = args.flags[0].lstrip()
-        generator.main(args, args.flags)
+        generator.main(args)
     except utils.DrMockRuntimeError as e:  # FIXME _Don't_ print traceback on clang errors, etc.!
         print(f'drmock-gen: error: {e}\n', file=sys.stderr)
         sys.exit(1)

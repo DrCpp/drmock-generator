@@ -25,7 +25,7 @@ MACRO_PREFIX = 'DRMOCK_'
 FORWARDING_CTOR_TEMPLATE_PARAMS = MACRO_PREFIX + '_FORWARDING_CTOR_TS'
 
 
-def main(args: str, compiler_flags: list[str]) -> None:
+def main(args: str) -> None:
     try:
         with open(args.input_path, 'r') as f:
             old_header = f.read()
@@ -34,7 +34,7 @@ def main(args: str, compiler_flags: list[str]) -> None:
 
     macros = {'Q_OBJECT'}
     old_header = _hide_macros_from_preprocessor(old_header, macros)
-    new_header, new_source = _main_impl(args, compiler_flags, old_header)
+    new_header, new_source = _main_impl(args, old_header)
 
     output_path_header = args.output_path
     without_extension, _ = os.path.splitext(output_path_header)
@@ -63,7 +63,7 @@ def _hide_macros_from_preprocessor(source: str, macros: Iterable[str]) -> str:
     return source
 
 
-def _main_impl(args: str, compiler_flags: list[str], input_header) -> tuple[str, str]:
+def _main_impl(args: str, input_header) -> tuple[str, str]:
     if not args.clang_library_file:
         raise utils.DrMockRuntimeError(
             'clang library file path not set. Specify the path to the clang'
@@ -71,7 +71,7 @@ def _main_impl(args: str, compiler_flags: list[str], input_header) -> tuple[str,
             + ' argument or by setting the environment variable'
             + ' CLANG_LIBRARY_FILE.')
     translator.set_library_file(args.clang_library_file)
-    root = translator.translate(args.input_path, input_header, compiler_flags)
+    root = translator.translate(args.input_path, input_header, args.flags)
     node, enclosing_namespace = root.find_matching_class(args.input_class)
 
     if not node:
