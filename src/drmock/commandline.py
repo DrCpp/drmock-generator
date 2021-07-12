@@ -46,6 +46,7 @@ _parser.add_argument('--output-class', default=r'Mock\1',
 # Mock all public virtual functions by default, unless -a=private
 _parser.add_argument('--access', '-a', default=['public', 'protected', 'private'],
                      help='only mock virtual functions with the specified access specs')
+_parser.add_argument('--flags', '-f', nargs=argparse.REMAINDER, default=[], help='the C++ compiler flags')
 # # Mock a selection of virtual functions if -m/--methods=
 # _parser.add_argument('--methods', '-m', default=[],
 #                      help='only mock specified virtual functions')
@@ -56,27 +57,30 @@ _parser.add_argument('--clang-library-file',
 
 
 def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
-
-    args, compiler_flags = _parser.parse_known_args(args)
+    args, _ = _parser.parse_known_args(args)
 
     # Apply isysroot default on macOS.
-    if sys.platform == 'darwin' and '-isysroot' not in compiler_flags:
+    if sys.platform == 'darwin' and '-isysroot' not in args.flags:
         tmp = subprocess.check_output(['xcrun', '--show-sdk-path'])
         if sys.stdout.encoding is not None:
             encoding = sys.stdout.encoding
         else:
             encoding = locale.getpreferredencoding()
         sdk = tmp.decode(encoding).rstrip('\n')
-        compiler_flags.append('-isysroot')
-        compiler_flags.append(sdk)
+        args.flags.append('-isysroot')
+        args.flags.append(sdk)
 
-    return args, compiler_flags
+    return args
 
 
 def main():
     try:
-        args, compiler_flags = parse_args(sys.argv[1:])
-        generator.main(args, compiler_flags)
+        args = parse_args(sys.argv[1:])
+        # Due to the way that argparse parses args, the need to strip
+        # the first compiler flag of whitespace!
+        if args.flags:
+            args.flags[0] = args.flags[0].lstrip()
+        generator.main(args, args.flags)
     except utils.DrMockRuntimeError as e:  # FIXME _Don't_ print traceback on clang errors, etc.!
         print(f'drmock-gen: error: {e}\n', file=sys.stderr)
         sys.exit(1)
