@@ -56,7 +56,7 @@ _parser.add_argument('--clang-library-file', '-l',
                      help='path to the libclang .dll/.so/.dylib')
 
 
-def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
+def parse_args(args: list[str]) -> argparse.Namespace:
     args = _parser.parse_args(args)
 
     # Apply isysroot default on macOS.
@@ -73,7 +73,8 @@ def parse_args(args, exit_on_error: bool = True) -> argparse.Namespace:
     return args
 
 
-def main():
+# This method is the entry point of the drmock-gen script.
+def main() -> None:
     try:
         args = parse_args(sys.argv[1:])
         # Due to the way that argparse parses args, the need to strip
