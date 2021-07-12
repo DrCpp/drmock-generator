@@ -36,21 +36,39 @@ def set_library_file(file: str) -> None:
 
 
 class Node:
+    """Wrapper class for ``clang.cindex.Cursor`` which tracks file
+    membership."""
+
     def __init__(self, cursor: clang.cindex.Cursor, path: str) -> None:
+        """Args:
+            cursor: The wrapper cursor
+            path: The file that the cursor belongs to
+        """
         self.cursor = cursor
         self._path = path
 
-    def get_children(self) -> list[clang.cindex.Cursor]:
+    def get_children(self) -> list[Node]:
+        """Get all children from the same file."""
         return [Node(each, self._path) for each in self.cursor.get_children()
                 if str(each.location.file) == self._path]
 
     def get_tokens(self) -> list[str]:
+        """Get the cursor's tokens."""
         return [each.spelling for each in self.cursor.get_tokens()]
 
     def find_matching_class(self,
                             regex: str,
                             enclosing_namespace: Optional[list[str]] = None
                             ) -> tuple[Optional[Node], list[str]]:
+        """Search the tree under ``self`` for a class whose name matches
+        ``regex``.
+
+        Args:
+            regex: The regex to match the sought class' name against
+            enclosing_namespace:
+                Only used for recursing, **must** not be set by the user
+
+        """
         if not enclosing_namespace:
             enclosing_namespace = []
 
@@ -65,6 +83,19 @@ class Node:
 
 
 def translate_file(path: str, compiler_flags: Optional[list[str]] = None) -> Node:
+    """Translate the content of ``path`` into its AST.
+
+    Args:
+        path: The path to the file
+        compiler_flags: A list of compiler flags used for parsing
+
+    Raises:
+        clang.cindex.LibclangError:
+            If the libclang path is not set or not found (see
+            ``set_library_file``)
+        utils.DrMockRuntimeError:
+            If ``path`` is empty
+    """
     with open(path, 'r') as f:
         source = f.read()
     return translate(path, source, compiler_flags)

@@ -24,6 +24,15 @@ PARAMETER_PACK = '... DRMOCK_Ts'
 
 def get_overloads_of_class(class_: types.Class,
                            access_specs: Iterator[str] = None) -> list[Overload]:
+    """Group method of ``class_`` into ``Overload`` objects.
+
+    Args:
+        class_: The class whose methods are grouped
+        acccess_specs: Only group method with these access specifiers
+
+    Returns:
+        A list with the ``Overload`` objects
+    """
     if not access_specs:
         access_specs = ['public']
     virtual_methods = [each for each in class_.get_virtual_methods()
@@ -34,17 +43,24 @@ def get_overloads_of_class(class_: types.Class,
 
 @dataclasses.dataclass
 class Overload:
-    """
-    Note: All methods are assumed to be _non-template_!
-    """
+    """Represents a C++ method overload.
 
+    Attributes:
+        parent: The class that owns the overloaded methods
+        methods: A collection of the methods
+
+    All methods are assumed to be _non-template_!
+    """
     parent: types.Class
     methods: Sequence[types.Method]
 
     def is_overload(self) -> bool:
+        """Check if ``self`` is a proper overload (with at least two
+        methods)."""
         return len(self.methods) > 1
 
     def generate_getter(self) -> types.Method:
+        """Generate the overload's template getter method."""
         f = self.methods[0]  # Representative of the overload.
         result = types.Method('f')  # Use temporary dummy name for initialization!
         result.template = types.TemplateDecl([PARAMETER_PACK])
@@ -72,6 +88,7 @@ class Overload:
         return result
 
     def generate_shared_ptrs(self) -> list[types.Variable]:
+        """Generate the overload's ``shared_ptr<Method>`` objects."""
         result = []
         for i, f in enumerate(self.methods):
             template_args = [self.parent.full_name(), f.return_type]
@@ -88,6 +105,7 @@ class Overload:
         return result
 
     def generate_dispatch_methods(self) -> list[types.Method]:
+        """Generate the overload's dispatch methods."""
         result = []
         for i, f in enumerate(self.methods):
             dispatch = types.Method('f')  # Temporary name for init.
@@ -109,6 +127,8 @@ class Overload:
         return result
 
     def generate_mock_implementations(self) -> list[types.Method]:
+        """Generate the mock implementations of the overload's
+        functions."""
         result = []
         for f in self.methods:
             impl = copy.deepcopy(f)  # Keep name, cv qualifiers.
@@ -140,7 +160,8 @@ class Overload:
         return result
 
     def generate_set_parent(self) -> list[str]:
-        """For each overload, return a C++ statement to set parent."""
+        """For each function, return a C++ statement to set the parent
+        class."""
         return [_generate_access(each, self.is_overload()) + '.parent(this);'
                 for each in self.methods]
 
@@ -153,8 +174,8 @@ def _generate_access(f: types.Method, overload: bool) -> str:
     """Return code for accessing method ptr from mock object.
 
     Args:
-        f: The method object.
-        overload: True if ``f`` is overloaded.
+        f: The method object
+        overload: True if ``f`` is overloaded
     """
     if overload:
         template_args = copy.deepcopy(f.params)

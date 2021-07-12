@@ -2,7 +2,21 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Classes for C++ AST node infos."""
+"""Classes for C++ AST node infos.
+
+Most classes represent a type of AST node and feature a ``from_node``
+``classmethod`` which may be created from an appropriate
+``translator.Node`` object:
+
+```python
+@classmethod
+def from_node(cls: _T, node: translator.Node) -> _T:
+    ...
+```
+
+The ``node`` parameter **must** have the correct cursor kind, otherwise
+the call will fail with an error.
+"""
 
 from __future__ import annotations
 
@@ -15,8 +29,7 @@ import clang.cindex
 from drmock import utils
 from drmock import translator
 
-"""
-We're using an ``OrderedDict`` to ensure that in ``Method.mangled_name``
+"""We're using an ``OrderedDict`` to ensure that in ``Method.mangled_name``
 for example ``<=>`` is replaced _before_ ``<=`` to ensure that
 ``operator<=>`` becomes ``operatorSpaceship`` instead of
 ``operatorLesserOrEqualGreater``.
@@ -56,6 +69,18 @@ _OPERATOR_SYMBOLS: ClassVar = collections.OrderedDict([
 
 
 def from_node(node: translator.Node) -> Any:
+    """Create an instance of an appropriate class of this module from a
+    node.
+
+    Args:
+        The node to the create the object from
+
+    The type of the instance is determined from the node's ``kind``
+    property.
+
+    Raises:
+        ValueError: If the appropriate class cannot be determined
+    """
     if not hasattr(from_node, '_DISPATCH'):
         from_node._DISPATCH = {
             clang.cindex.CursorKind.PARM_DECL: Type,
@@ -73,6 +98,21 @@ def from_node(node: translator.Node) -> Any:
 
 @dataclasses.dataclass
 class Type:
+    """For C++ type declarations.
+
+    Types are stored in "layers", where each layer represents an
+    indirection due to cv qualifiers, references or pointers. Each layer
+    points to the next layer using the ``inner`` attribute. The
+    inner-most layer is a string which holds the spelling of the core
+    type (for example, the inner-most type for  ``const
+    std::vector<int>&`` is ``'std::vector<int>'``).
+
+    Due to the nature of this design, artificial _naked_ layers which
+    hold no information are possible. For example:
+
+    >>> type_ = Type('int')
+    >>> naked = Type(type_)  # Represents same type, but with naked first layer
+    """
     inner: Union[str, Type]
     const: bool = False
     volatile: bool = False
@@ -82,6 +122,7 @@ class Type:
     parameter_pack: bool = False
 
     def get_decayed(self) -> Type:
+        """Return the decayed version of ``self``."""
         # Note that if an instance of `Type` is a reference, then its
         # const qualifier is saved in the inner type. This is due to the
         # confusion between the terms "const reference" and "reference
@@ -106,6 +147,13 @@ class Type:
         return result
 
     def _get_simplified(self, first_pass: bool = True) -> Type:
+        """Return equivalent type with naked layers removed.
+
+        Args:
+            first_pass:
+                Optional argument for recursing, **must** not be set by
+                the caller
+        """
         # Find outer-most non-naked position in the hierarchy. This type
         # will form the outer Type object of the result.
         result = self
@@ -129,7 +177,8 @@ class Type:
         result.inner = result.inner._get_simplified(False)
         return result
 
-    def _is_naked(self):
+    def _is_naked(self) -> bool:
+        """Check if ``self`` is naked."""
         return (not self.const and not self.volatile and not self.lvalue_ref and
                 not self.rvalue_ref and not self.pointer and not self.parameter_pack)
 
@@ -144,7 +193,7 @@ class Type:
         return result
 
     @classmethod
-    def from_node(cls: Type, node: translator.Node) -> Type:
+    def from_node(cls, node: translator.Node) -> Type:
         # NOTE The following is a hack to solve some rather unfortunate
         # behavior of python clang. When using a type alias such as
         #
@@ -215,7 +264,8 @@ class Type:
         return result
 
     @classmethod
-    def from_tokens(cls: Type, tokens: Sequence[str]) -> Type:
+    def from_tokens(cls, tokens: Sequence[str]) -> Type:
+        """Create a ``Type`` instance from a sequence of tokens."""
         t = cls('T')  # Use temporary inner name to init ``t``.
 
         # Read from the right.
@@ -268,16 +318,36 @@ class Type:
 
     @classmethod
     def from_spelling(cls, spelling: str) -> Type:
+        """Create a ``Type`` instance from a cursor spelling."""
         tokens = spelling.split(' ')
         return cls.from_tokens(tokens)
 
 
 class TemplateDecl:  # For TemplateDeclaration
+    """For template declarations."""
 
     def __init__(self, params: Sequence[str]):
+        """Args:
+            params: A list of the template decl's params
+
+        The ``class``/``typename`` keyword **must** be omitted. Variadic
+        template parameters are specified using a prefixed ``'... '``.
+        For example:
+
+        >>> decl = TemplateDecl(['T', '... Ts'])
+        """
         self.params = params
 
     def get_args(self) -> list[str]:
+        """Get the decl's args.
+
+        Note that the tokens of a variadic template param are swapped.
+        For example:
+
+        >>> decl = TemplateDecl(['T', '... Ts'])
+        >>> decl.get_args()
+        ['T', 'Ts ...']
+        """
         return [utils.swap(r'\.\.\. (.*)', r'\1 ...', each)
                 if each.startswith('...') else each
                 for each in self.params]
@@ -295,7 +365,7 @@ class TemplateDecl:  # For TemplateDeclaration
         return result
 
     @classmethod
-    def from_node(cls: TemplateDecl, node: translator.Node) -> TemplateDecl:
+    def from_node(cls, node: translator.Node) -> TemplateDecl:
         params = []
         for each in node.get_children():
             if each.cursor.kind == clang.cindex.CursorKind.TEMPLATE_TYPE_PARAMETER:
@@ -312,6 +382,7 @@ class TemplateDecl:  # For TemplateDeclaration
 
 
 class Constructor:
+    """For C++ class constructors."""
 
     def __init__(self,
                  name: str,
@@ -320,6 +391,14 @@ class Constructor:
                  initializer_list: Optional[Sequence[str]] = None,
                  body: str = '',
                  access: str = 'public'):
+        """Args:
+            name: The ctor's name
+            params: The params
+            template: A template decl if the ctor is templated
+            initializer_list: The entries of the ctor's initializer list
+            body: The body
+            access: The access specifier of the object
+        """
         self._name = name
         if params is not None:
             self._params = params
@@ -335,6 +414,7 @@ class Constructor:
 
     @property
     def access(self) -> str:
+        """The access specifier of the object."""
         return self._access
 
     def __str__(self) -> str:
@@ -354,7 +434,7 @@ class Constructor:
 
 @dataclasses.dataclass
 class Method:
-    """Class for representing C++ class methods.
+    """For C++ class methods.
 
     Attributes:
         name: The method's name
@@ -365,14 +445,20 @@ class Method:
         volatile: Indicates if the method is volatile-qualified
         virtual: Indicates if the method is virtual
         pure_virtual: Indicates if the method is pure virtual
-        override: Indicates if the method has the override specifier
-        noexcept: Indicates if the method has the noexcept specifier
+        override: Indicates if the method has the ``override`` specifier
+        noexcept: Indicates if the method has the ``noexcept`` specifier
         operator: Indicates if the method is an operator
         body: The method's body (if available)
         access: The method's access specifier
 
-    Beware! By manually setting an object's property, you can create
-    classes which are pure virtual but not virtual.
+    Beware! By manually setting these attributes, you **may** impossible
+    configurations, methods which are pure virtual but not virtual, for
+    example.
+
+    Each method has a _mangled name_. If the method is an operator, the
+    operator symbol is replaced with an alphanumeric string which
+    describes that symbol (see ``_OPERATOR_SYMBOLS``), otherwise, the
+    mangled name is the method's normal name.
     """
     name: str
     params: Sequence[Union[str, Type]] = dataclasses.field(default_factory=list)
@@ -389,6 +475,7 @@ class Method:
     access: str = 'public'
 
     def mangled_name(self) -> str:
+        """Return the mangled name of the method."""
         result = self.name
         for k, v in _OPERATOR_SYMBOLS.items():
             result = result.replace(k, v)
@@ -420,7 +507,7 @@ class Method:
         return result
 
     @classmethod
-    def from_node(cls: Method, node: translator.Node) -> Method:
+    def from_node(cls, node: translator.Node) -> Method:
         # NOTE The following is a hack to solve some rather unfortunate
         # behavior of python clang. When using a type alias such as
         #
@@ -520,12 +607,23 @@ class Method:
 
 @dataclasses.dataclass
 class TypeAlias:
+    """For C++ (template and non-template) type aliases.
+
+    Attributes:
+        name: The alias
+        typedef: The aliased type
+        template: The type alias' template decl (if available)
+
+    Example:
+        >>> TypeAlias('Vector', 'std::vector<T>', TemplateDecl(['T']))
+        # template<typename T> using Vector<T> = std::vector<T>;
+    """
     name: str
     typedef: str
     template: Optional[TemplateDecl] = None
 
     @classmethod
-    def from_node(cls: TypeAlias, node: translator.Node) -> TypeAlias:
+    def from_node(cls, node: translator.Node) -> TypeAlias:
         if node.cursor.kind == clang.cindex.CursorKind.TYPE_ALIAS_TEMPLATE_DECL:
             template = TemplateDecl.from_node(node)
             node = next(each for each in node.get_children()
@@ -546,8 +644,21 @@ class TypeAlias:
 
 @dataclasses.dataclass
 class Class:
-    # NOTE Not a faithful representation of a C++ class. For example,
-    # the order of members may be changed. Also, we don't check for base classes.
+    """For C++ classes.
+
+    Attributes:
+        name: The class name
+        enclosing_namespace: The namespace the class is contained in
+        members: A list of the class' members (see note below)
+        final: Indicates if the class is final
+        q_object: Indicates if the class is a ``Q_OBJECT``
+        parent: The name of the class' parent (if available)
+        template: The template decl (if available)
+
+    Note that this class is not a faithful representation of C++
+    classes. For example, the order of members may change during
+    loading. Also, we don't check for base classes, etc.
+    """
     name: str
     enclosing_namespace: list[str] = dataclasses.field(default_factory=list)
     members: list[Union[Constructor, Method, Variable]] = dataclasses.field(
@@ -561,6 +672,7 @@ class Class:
     template: Optional[TemplateDecl] = None
 
     def full_name(self) -> str:
+        """Return the fully qualified class name."""
         result = ''
         result += ''.join(each + '::' for each in self.enclosing_namespace)
         result += self.name
@@ -571,11 +683,17 @@ class Class:
     def get_virtual_methods(self) -> list[Method]:
         return [each for each in self.members if isinstance(each, Method) and each.virtual]
 
-    def get_type_aliases(self):
+    def get_type_aliases(self) -> list[TypeAlias]:
         return [each for each in self.members if isinstance(each, TypeAlias)]
 
-    def explicit_instantiation_allowed(self):
-        return not self.template and not self.get_type_aliases()
+    def explicit_instantiation_allowed(self) -> bool:
+        """Check if explicit instantiations of the class' method are
+        possible.
+
+        As of C++17, this means that the class is not a class template
+        nor contains type aliases.
+        """
+        return (self.template is None) and not self.get_type_aliases()
 
     def __str__(self):
         result = ''
@@ -687,6 +805,15 @@ class Class:
 
 @dataclasses.dataclass
 class Variable:
+    """For C++ member variable declarations.
+
+    Attributes:
+        name: The variable name
+        type: The type declaration
+        default_args: The default value of the member
+        mutable: Indicates if the member is mutable
+        access: The member's access specifier
+    """
     name: str
     type: Type
     default_args: Sequence[str] = dataclasses.field(default_factory=list)
@@ -704,7 +831,10 @@ class Variable:
 
 
 def _access_spec_decl_from_node(node: translator.Node) -> str:
-    tokens = node.get_tokens()
+    """Get access specifier token from ``ACCESS_SPEC_DECL``."""
+    tokens = node.get_tokens()  # public, protected, private (slots)
+    # Since `slots` and `signals` is #defined as empty, an empty access
+    # spec decl is most likely ``signals:``.
     if not tokens:
         return 'signals'
     return tokens[0]

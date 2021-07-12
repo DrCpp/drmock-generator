@@ -8,11 +8,11 @@ from typing import Any, Sequence
 
 import re
 
-
 INDENT_WIDTH = 2
 
 
 def template(params: Sequence[Any]) -> str:
+    """Join sequence in angled braces."""
     return '<' + ', '.join(str(each) for each in params) + '>'
 
 
@@ -42,18 +42,36 @@ def swap(regex: str, dst: str, src: str) -> str:
     return result
 
 
-def split_by_condition(func, seq: Sequence[Any]):
-    """Split `seq` into lists of equivalence classes."""
+def split_by_condition(pred, seq: Sequence[_T]) -> list[list[_T]]:
+    """Split ``seq`` into lists of equivalence classes.
+
+    Args:
+        pred:
+            The predicate which sorts the sequence into equivalence
+            classes
+        seq:
+            The sequence to split
+
+    Returns:
+        A list which contains the equivalence classes as lists
+    """
     # Get values in order of occurence.
     values = []
     for each in seq:
-        val = func(each)
+        val = pred(each)
         if val not in values:
             values.append(val)
-    return [[each for each in seq if func(each) == val] for val in values]
+    return [[each for each in seq if pred(each) == val] for val in values]
 
 
 def indent(value: str, depth: int = 1, width: int = INDENT_WIDTH) -> str:
+    """Indent a string according to depth.
+
+    Args:
+        value: The string to indent
+        depth: The depth of the string (number of tabs/indents)
+        width: Indent width
+    """
     result = value
     result = depth * width * ' ' + result
     result = result.replace('\n', '\n' + depth * width * ' ')

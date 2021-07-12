@@ -25,11 +25,23 @@ MACRO_PREFIX = 'DRMOCK_'
 FORWARDING_CTOR_TEMPLATE_PARAMS = MACRO_PREFIX + '_FORWARDING_CTOR_TS'
 
 
-def main(args: str) -> None:
+def main(args) -> None:
+    """Generate mock files and save them on disk.
+
+    Args:
+        args: Holds the commandline arguments
+
+    The ``args`` parameter is required to have the fields specified in
+    the documentation of the ``commandline`` module.
+
+    Raises:
+        utils.DrMockRuntimeError:
+            If reading/writing any of the specified files fails
+    """
     try:
         with open(args.input_path, 'r') as f:
             old_header = f.read()
-    except IOError as e:
+    except (FileNotFoundError, IOError) as e:
         raise utils.DrMockRuntimeError(str(e))
 
     macros = {'Q_OBJECT'}
@@ -51,25 +63,40 @@ def main(args: str) -> None:
 def _hide_macros_from_preprocessor(source: str, macros: Iterable[str]) -> str:
     """Hide macros with keywords that drmock recognizes.
 
-    Works by #undef'ing the macro and replacing every occurence by a
+    Works by ``#undef``'ing the macro and replacing every occurence by a
     variable declaration.
 
     Known problems: If ``macros`` is ``['MACRO', 'LONG_MACRO']``, then
     the call will produce unexpected results.
     """
-
     for each in macros:
         source = source.replace(each, f'#undef {each}\nint {MACRO_PREFIX}{each};')
     return source
 
 
-def _main_impl(args: str, input_header) -> tuple[str, str]:
+def _main_impl(args: str, input_header: str) -> tuple[str, str]:
+    """Generate mock header and source code.
+
+    Args:
+        args: Holds the commandline arguments
+        input_header: The header of the C++ .h to mock
+
+    Returns:
+        A tuple which holds the header and source code of the mock class
+
+    Raises:
+        utils.DrMockRuntimeError:
+            If the clang library file is not set
+        utils.DrMockRuntimeError:
+            If no class matching the pattern provided by ``args`` is
+            found in ``input_header``
+    """
     if not args.clang_library_file:
         raise utils.DrMockRuntimeError(
             'clang library file path not set. Specify the path to the clang'
-            + ' .dll/.so/.dylib using the --clang-library-file command line'
-            + ' argument or by setting the environment variable'
-            + ' CLANG_LIBRARY_FILE.')
+            ' .dll/.so/.dylib using the --clang-library-file command line'
+            ' argument or by setting the environment variable'
+            ' CLANG_LIBRARY_FILE.')
     translator.set_library_file(args.clang_library_file)
     root = translator.translate(args.input_path, input_header, args.flags)
     node, enclosing_namespace = root.find_matching_class(args.input_class)
@@ -96,6 +123,15 @@ def _generate_header(class_: types.Class,
                      mock_object: types.Class,
                      mock_implementation: types.Class,
                      input_path: str) -> str:
+    """Generate header code from ``drmock.types.Class`` objects.
+
+    Args:
+        class_: The mocked class
+        mock_object: The mock object class
+        mock_implementation: The mock implementation class
+        input_path:
+            Absolute or relative path to the mocked class' .h file
+    """
     result = ''
 
     result += _include_guard_open(class_.name)
@@ -127,11 +163,13 @@ def _generate_header(class_: types.Class,
 
 
 def _generate_source(class_: types.Class, header_path: str) -> str:
-    """
+    """Generate mock implementation source code.
 
     Args:
-        class_: ...
-        header_path: Absolute path to the source's header path.
+        class_:
+            The mocked class (not the mock object/implementation class!)
+        input_path:
+            Absolute path to the mock object/implementation .h file
     """
     result = ''
     if class_.explicit_instantiation_allowed():
@@ -149,6 +187,13 @@ def _generate_source(class_: types.Class, header_path: str) -> str:
 
 
 def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class:
+    """Generate the ``types.Class`` object of the mock object.
+
+    Args:
+        class_:
+            The mocked class (not the mock object/implementation class!)
+        access: Only mock methods with these access specifiers
+    """
     result = types.Class(_generate_mock_object_class_name(class_))
     result.enclosing_namespace = MOCK_OBJECT_ENCLOSING_NAMESPACE
     result.template = class_.template
@@ -217,7 +262,17 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
     return result
 
 
-def _generate_mock_implementation(name: str, class_: types.Class, access: list[str]) -> types.Class:
+def _generate_mock_implementation(name: str,
+                                  class_: types.Class,
+                                  access: list[str]) -> types.Class:
+    """Generate the ``types.Class`` object of the mock implementation.
+
+    Args:
+        name: The name of the mock implementation class
+        class_:
+            The mocked class (not the mock object/implementation class!)
+        access: Only mock methods with these access specifiers
+    """
     result = types.Class(name)
     result.enclosing_namespace = class_.enclosing_namespace
     result.template = class_.template
@@ -274,7 +329,12 @@ def _include_guard_close(name: str) -> str:
 
 
 def _generate_method_template(parent: str, method: types.Method) -> str:
-    """Return template for explicit instantiation of C++ Method object."""
+    """Return template for explicit instantiation of C++ Method object.
+
+    Args:
+        parent: The parent class' fully qualified name
+        method: The target method
+    """
     decayed_signature = [str(method.return_type)] \
         + [str(each.get_decayed()) for each in method.params]
     return METHOD_CPP_CLASS + '<' + parent + ', ' + ', '.join(decayed_signature) + '>'
@@ -302,6 +362,13 @@ def _generate_mock_object_class_name(class_: types.Class) -> str:
 
 
 def _generate_mock_object_full_class_name(class_: types.Class):
+    """Generate the mock object's name including namespace specifiers
+    and template params.
+
+    Args:
+        class_:
+            The mocked class (not the mock object/implementation class!)
+    """
     result = ''
     result += ''.join(each + '::' for each in MOCK_OBJECT_ENCLOSING_NAMESPACE)
     result += _generate_mock_object_class_name(class_)

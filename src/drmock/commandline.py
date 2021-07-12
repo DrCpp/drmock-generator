@@ -16,7 +16,6 @@ import sys
 from drmock import generator
 from drmock import utils
 
-
 _parser = argparse.ArgumentParser(
     description='Create mock object .h and .cpp files',
     formatter_class=argparse.RawTextHelpFormatter,
