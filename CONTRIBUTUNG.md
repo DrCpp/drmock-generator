@@ -19,8 +19,7 @@ tested, and that all tests pass.
 
 ### Licensing
 
-All contributions will be issued under the GPL 3.0 license. All new
-files must include a REUSE-3.0 compliant GPL 3.0 license stub, including your authorship
+All contributions to the source code will be issued under the GPL-3.0-or-later license. All new files must include a REUSE-3.0 compliant GPL-3.0-or-later license stub, including your authorship
 copyright. See [reuse.software](reuse.software) for details.
 
 
