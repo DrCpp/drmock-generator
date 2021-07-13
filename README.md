@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ![unix](https://github.com/DrCpp/drmock-gen/actions/workflows/unix.yml/badge.svg)
 ![windows](https://github.com/DrCpp/drmock-gen/actions/workflows/windows.yml/badge.svg)
+![macOS](https://github.com/DrCpp/drmock-gen/actions/workflows/macos.yml/badge.svg)
 
 
 ## Installing
