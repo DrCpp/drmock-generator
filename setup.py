@@ -8,7 +8,7 @@ from setuptools import setup
 setup(
     name='drmock-generator',
     author='Malte Kliemann, Ole Kliemann',
-    version='0.6.0',
+    version='0.6.0-beta',
     packages=['drmock'],
     package_dir={'': 'src'},
     entry_points={
