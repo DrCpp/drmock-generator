@@ -62,7 +62,18 @@ To run all tests, call `make`. The environment variable
 `CLANG_LIBRARY_FILE` must be set in order to test the `translator`
 module.
 
+Due to the irreducible complexity of the output of `drmock-gen`, any
+significant changes *should* be tested against the latest version of
+test suite of the C++ framework, as well.
+
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+
+## Developer notes
+
+Details on the interface implemented by output code of `drmock-gen` is
+compliant with the specification of the C++ framework. See the
+documentation of the main framework for details.
