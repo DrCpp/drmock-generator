@@ -1,3 +1,8 @@
+/* SPDX-FileCopyrightText: 2021 Malte Kliemann, Ole Kliemann
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #include <memory>
 #include <string>
 #include <vector>
