@@ -18,4 +18,7 @@ setup(
     },
     include_package_data=True,
     python_requires='>=3.7',
+    install_requires=[
+        'clang>=11.0',
+    ]
 )
