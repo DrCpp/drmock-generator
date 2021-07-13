@@ -16,6 +16,20 @@ from drmock import utils
 WIDTH = 4
 
 
+def print_tree(root: translator.Node) -> None:
+    def dump_func(node, depth):
+        print(_DISPATCH.get(node.cursor.kind, _dump_basic)(node, depth))
+    _visit_tree(root, dump_func)
+
+
+def _visit_tree(root: translator.Node,
+                func: Callable[[translator.Node], Any],
+                depth: Optional[int] = 0) -> None:
+    func(root, depth)
+    for each in root.get_children():
+        _visit_tree(each, func, depth + 1)
+
+
 def _indent(func):
     @functools.wraps(func)
     def new_func(node, depth: Optional[int] = 0):
@@ -52,17 +66,3 @@ _DISPATCH = {
     clang.cindex.CursorKind.CXX_METHOD: _dump_cxx_method,
     clang.cindex.CursorKind.TYPE_REF: _dump_type_ref,
 }
-
-
-def print_tree(root: translator.Node) -> None:
-    def dump_func(node, depth):
-        print(_DISPATCH.get(node.cursor.kind, _dump_basic)(node, depth))
-    _visit_tree(root, dump_func)
-
-
-def _visit_tree(root: translator.Node,
-                func: Callable[[translator.Node], Any],
-                depth: Optional[int] = 0) -> None:
-    func(root, depth)
-    for each in root.get_children():
-        _visit_tree(each, func, depth + 1)

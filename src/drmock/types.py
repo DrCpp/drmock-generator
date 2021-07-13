@@ -621,6 +621,13 @@ class TypeAlias:
     typedef: str
     template: Optional[TemplateDecl] = None
 
+    def __str__(self):
+        result = ''
+        if self.template:
+            result += str(self.template) + ' '
+        result += f'using {self.name} = {str(self.typedef)};'
+        return result
+
     @classmethod
     def from_node(cls, node: translator.Node) -> TypeAlias:
         if node.cursor.kind == clang.cindex.CursorKind.TYPE_ALIAS_TEMPLATE_DECL:
@@ -631,13 +638,6 @@ class TypeAlias:
             template = None
         result = TypeAlias(node.cursor.spelling, node.cursor.underlying_typedef_type.spelling)
         result.template = template
-        return result
-
-    def __str__(self):
-        result = ''
-        if self.template:
-            result += str(self.template) + ' '
-        result += f'using {self.name} = {str(self.typedef)};'
         return result
 
 
