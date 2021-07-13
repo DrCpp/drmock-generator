@@ -61,3 +61,8 @@ C:\Program Files\LLVM\bin\libclang.dll                       (on Windows using c
 To run all tests, call `make`. The environment variable
 `CLANG_LIBRARY_FILE` must be set in order to test the `translator`
 module.
+
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
