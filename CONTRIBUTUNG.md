@@ -16,11 +16,13 @@ Make a pull request if you wish to fix a bug or implement a new feature.
 When making a pull request, please ensure the code is properly unit
 tested, and that all tests pass.
 
+
 ### Licensing
 
 All contributions will be issued under the GPL 3.0 license. All new
-files must include a GPL 3.0 license stub, including your authorship
-copyright.
+files must include a REUSE-3.0 compliant GPL 3.0 license stub, including your authorship
+copyright. See [reuse.software](reuse.software) for details.
+
 
 ### Code style
 
