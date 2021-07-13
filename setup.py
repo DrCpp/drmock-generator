@@ -4,10 +4,16 @@
 
 from setuptools import setup
 
+with open('README.md') as readme:
+    long_description = readme.read()
 
 setup(
     name='drmock-generator',
     author='Malte Kliemann, Ole Kliemann',
+    description='C++ mock object generator',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    license='GLP-3.0-or-later',
     version='0.6.0-beta',
     packages=['drmock'],
     package_dir={'': 'src'},
