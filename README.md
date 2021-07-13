@@ -17,16 +17,27 @@ Run `pip install .` or `make install` install. Usage requires
 via `pip install clang`. For `libclang`:
 
 ```
-sudo apt-get install libclang-6.0-dev       (on Linux)
+sudo apt-get install libclang-7.0-dev       (on Linux)
 choco install llvm                          (on Windows)
 ```
 
-See [chocolatey.org](https://chocolatey.org) and [brew.sh](brew.sh) for
-details.
+See [chocolatey.org](https://chocolatey.org) for details. On macOS, `libclang` is installed by default.
+
 
 ## Using
 
-Type `drmock-gen --help` for instructions. You need to point 
+Type `drmock-gen --help` for instructions. You must pass the path to the `libclang.dll/.so/.dylib` in one of two ways:
+
+- Set the environment variable `CLANG_LIBRARY_FILE` to the absolute path of the `libclang.dll/.so/.dylib`
+- Specify the absolute path to the `libclang.dll/.so/.dylib` using the `-l` parameter
+
+The following paths are usually correct:
+
+```
+/usr/lib/llvm-7/lib/libclang.so                              (on Linux)
+C:\Program Files\LLVM\bin\libclang.dll                       (on Windows using choco)
+/Library/Developer/CommandLineTools/usr/lib/libclang.dylib   (on macOS)
+```
 
 
 ## Testing
