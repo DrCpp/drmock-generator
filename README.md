@@ -6,8 +6,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # drmock generator
 
-![unix](https://github.com/DrCpp/drmock-generator/actions/workflows/linux.yml/badge.svg)
-![windows](https://github.com/DrCpp/drmock-generator/actions/workflows/windows.yml/badge.svg)
+![Linux](https://github.com/DrCpp/drmock-generator/actions/workflows/linux.yml/badge.svg)
+![Windows](https://github.com/DrCpp/drmock-generator/actions/workflows/windows.yml/badge.svg)
 ![macOS](https://github.com/DrCpp/drmock-generator/actions/workflows/macos.yml/badge.svg)
 
 `drmock-generator` is a component of the C++ testing/mocking framework
