@@ -25,8 +25,8 @@ other build managers, feel free to contact us for support!
 ## Installing
 
 Run `pip install .` or `make install` install. Usage requires
-`python-clang>=11.0` and `libclang`. Install `python-clang`
-via `pip install clang`. For `libclang`:
+`python>=3.7`, `python-clang>=11.0` and `libclang`. Install
+`python-clang` via `pip install clang`. For `libclang`:
 
 ```
 sudo apt-get install libclang-7.0-dev       (on Linux)
