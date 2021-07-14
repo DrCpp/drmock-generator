@@ -72,7 +72,7 @@ def parse_args(args: list[str]) -> argparse.Namespace:
     return args
 
 
-# This method is the entry point of the drmock-gen script.
+# This method is the entry point of the drmock-generator script.
 def main() -> None:
     try:
         args = parse_args(sys.argv[1:])
@@ -82,5 +82,5 @@ def main() -> None:
             args.flags[0] = args.flags[0].lstrip()
         generator.main(args)
     except utils.DrMockRuntimeError as e:  # FIXME _Don't_ print traceback on clang errors, etc.!
-        print(f'drmock-gen: error: {e}\n', file=sys.stderr)
+        print(f'drmock-generator: error: {e}\n', file=sys.stderr)
         sys.exit(1)

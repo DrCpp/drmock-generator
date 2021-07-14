@@ -5,9 +5,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 
-# Contributing to `drmock-gen`
+# Contributing to `drmock-generator`
 
-You are cordially invited to contribute to `drmock-gen` by reporting and
+You are cordially invited to contribute to `drmock-generator` by reporting and
 fixing bugs, and by proposing and implementing new features. 
 
 To report bugs or request a feature, raise an issue in this repository.
@@ -25,5 +25,5 @@ copyright. See [reuse.software](reuse.software) for details.
 
 ### Code style
 
-When contributing code, please follow the style of existing `drmock-gen`
+When contributing code, please follow the style of existing `drmock-generator`
 source code.

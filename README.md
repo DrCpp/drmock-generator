@@ -6,19 +6,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # drmock generator
 
-![unix](https://github.com/DrCpp/drmock-gen/actions/workflows/unix.yml/badge.svg)
-![windows](https://github.com/DrCpp/drmock-gen/actions/workflows/windows.yml/badge.svg)
-![macOS](https://github.com/DrCpp/drmock-gen/actions/workflows/macos.yml/badge.svg)
+![unix](https://github.com/DrCpp/drmock-generator/actions/workflows/unix.yml/badge.svg)
+![windows](https://github.com/DrCpp/drmock-generator/actions/workflows/windows.yml/badge.svg)
+![macOS](https://github.com/DrCpp/drmock-generator/actions/workflows/macos.yml/badge.svg)
 
-`drmock-gen` is a component of the C++ testing/mocking framework
+`drmock-generator` is a component of the C++ testing/mocking framework
 [DrMock](https://github.com/DrCpp/DrMock). It takes a C++ `.h` file as
 input and generates the files for a mock implementation of the interface
 specified in the original header file, which the DrMock framework then
 consumes.
 
-The framework contains a CMake integration of `drmock-gen`. Unless
+The framework contains a CMake integration of `drmock-generator`. Unless
 you're using a different build manager, you will not need to call
-`drmock-gen` directly. If you're interested in writing integrations for
+`drmock-generator` directly. If you're interested in writing integrations for
 other build managers, feel free to contact us for support!
 
 
@@ -39,7 +39,7 @@ See [chocolatey.org](https://chocolatey.org) for details. On macOS,
 
 ## Using
 
-Type `drmock-gen --help` for instructions. You must pass the path to the
+Type `drmock-generator --help` for instructions. You must pass the path to the
 `libclang.dll/.so/.dylib` in one of two ways:
 
 - Set the environment variable `CLANG_LIBRARY_FILE` to the absolute path
@@ -62,7 +62,7 @@ To run all tests, call `make`. The environment variable
 `CLANG_LIBRARY_FILE` must be set in order to test the `translator`
 module.
 
-Due to the irreducible complexity of the output of `drmock-gen`, any
+Due to the irreducible complexity of the output of `drmock-generator`, any
 significant changes *should* be tested against the latest version of
 test suite of the C++ framework, as well.
 
@@ -74,6 +74,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Developer notes
 
-Details on the interface implemented by output code of `drmock-gen` is
+Details on the interface implemented by output code of `drmock-generator` is
 compliant with the specification of the C++ framework. See the
 documentation of the main framework for details.

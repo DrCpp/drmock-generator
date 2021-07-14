@@ -19,7 +19,7 @@ setup(
     package_dir={'': 'src'},
     entry_points={
         'console_scripts': [
-            'drmock-gen = drmock.commandline:main'
+            'drmock-generator = drmock.commandline:main'
         ]
     },
     include_package_data=True,
