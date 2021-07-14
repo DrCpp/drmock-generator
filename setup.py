@@ -14,7 +14,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     license='GLP-3.0-or-later',
-    version='0.6.0-beta',
+    version='0.6.0-beta1',
     packages=['drmock'],
     package_dir={'': 'src'},
     entry_points={
