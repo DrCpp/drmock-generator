@@ -69,8 +69,8 @@ class TestOverload:
          types.Method(
              name='foo',
              return_type=types.Type(inner='auto', lvalue_ref=True),
-             template=types.TemplateDecl(['... DRMOCK_Ts']),
-             body='return foo_dispatch(TypeContainer<DRMOCK_Ts ..., int, float, drmock::Const>{});')),
+             template=None,
+             body='return foo_dispatch(TypeContainer<int, float, drmock::Const>{});')),
         ('Foo',
          [{'mangled_name': mock.Mock(return_value='foo'), 'params': [], 'const': True},
           {'mangled_name': mock.Mock(return_value='foo'), 'params': ['int'], 'const': True}],

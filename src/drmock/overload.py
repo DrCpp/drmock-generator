@@ -60,19 +60,18 @@ class Overload:
         """Generate the overload's template getter method."""
         f = self._methods[0]  # Representative of the overload.
         result = types.Method('f')  # Use temporary dummy name for initialization!
-        result.template = types.TemplateDecl([PARAMETER_PACK])
         result.name = f.mangled_name()
         result.return_type = types.Type.from_spelling('auto &')
-
-        # Create arguments for dispatch call.
-        dispatch = result.template.get_args()
 
         # If all methods have the same parameter types, then these must
         # automatically be passed as arguments to the dispatch call.
         # NOTE When using strings, spelling differences between equal
         # types (``T *`` vs. ``T*``) can cause this part to malfunction.
         if not self.is_overload():  # all(f.params == each.params for each in self._methods):
-            dispatch.extend(f.params)
+            dispatch = f.params[:]
+        else:
+            result.template = types.TemplateDecl([PARAMETER_PACK])
+            dispatch = result.template.get_args()
 
         # If all methods are const qualified, then the const qualifier
         # must automatically be passed to the dispatch method.
