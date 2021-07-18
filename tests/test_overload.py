@@ -57,23 +57,23 @@ class TestOverload:
 
     @pytest.mark.parametrize('parent, kwargs, expected', [
         ('Foo',
-         [{'mangled_name': mock.Mock(return_value='foo'), 'params': [], 'const': True},
-          {'mangled_name': mock.Mock(return_value='foo'), 'params': ['int'], 'const': False}],
+         [{'mangled_name': mock.Mock(return_value='foo'), 'params': [], 'const': True, 'lvalue': False, 'rvalue': False},
+          {'mangled_name': mock.Mock(return_value='foo'), 'params': ['int'], 'const': False, 'lvalue': False, 'rvalue': False}],
          types.Method(name='foo',
                       return_type=types.Type(inner='auto', lvalue_ref=True),
                       template=types.TemplateDecl(['... DRMOCK_Ts']),
                       body='return foo_dispatch(TypeContainer<DRMOCK_Ts ...>{});')),
         ('Foo',
          [{'mangled_name': mock.Mock(return_value='foo'), 'params': [
-             'int', 'float'], 'const': True}],
+             'int', 'float'], 'const': True, 'lvalue': False, 'rvalue': False}],
          types.Method(
              name='foo',
              return_type=types.Type(inner='auto', lvalue_ref=True),
-             template=types.TemplateDecl(['... DRMOCK_Ts']),
-             body='return foo_dispatch(TypeContainer<DRMOCK_Ts ..., int, float, drmock::Const>{});')),
+             template=None,
+             body='return foo_dispatch(TypeContainer<int, float, drmock::Const>{});')),
         ('Foo',
-         [{'mangled_name': mock.Mock(return_value='foo'), 'params': [], 'const': True},
-          {'mangled_name': mock.Mock(return_value='foo'), 'params': ['int'], 'const': True}],
+         [{'mangled_name': mock.Mock(return_value='foo'), 'params': [], 'const': True, 'lvalue': False, 'rvalue': False},
+          {'mangled_name': mock.Mock(return_value='foo'), 'params': ['int'], 'const': True, 'lvalue': False, 'rvalue': False}],
          types.Method(name='foo',
                       return_type=types.Type(inner='auto', lvalue_ref=True),
                       template=types.TemplateDecl(['... DRMOCK_Ts']),
@@ -82,6 +82,9 @@ class TestOverload:
     def test_generate_getter(self, parent, kwargs, expected, mocker):
         methods = [mocker.Mock(**each) for each in kwargs]
         collection = overload.Overload(parent, methods)
+        for each in methods:
+            print(each.lvalue)
+            print(each.rvalue)
         assert collection.generate_getter() == expected
 
     @pytest.mark.parametrize('full_name, kwargs, expected', [
@@ -143,11 +146,15 @@ class TestOverload:
          [{'mangled_name': mock.Mock(return_value='foo'),
            'params': [],
            'const': True,
-           'volatile': False},
+           'volatile': False,
+           'lvalue': False,
+           'rvalue': False},
           {'mangled_name': mock.Mock(return_value='foo'),
            'params': ['int'],
            'const': False,
-           'volatile': False}],
+           'volatile': False,
+           'lvalue': False,
+           'rvalue': False,}],
          [types.Method(name='foo_dispatch',
                        params=[types.Type(inner='TypeContainer<drmock::Const>')],
                        return_type=types.Type(inner='auto', lvalue_ref=True),
@@ -162,7 +169,9 @@ class TestOverload:
          [{'mangled_name': mock.Mock(return_value='foo'),
            'params': ['int', 'float'],
            'const': True,
-           'volatile': False}],
+           'volatile': False,
+           'lvalue': False,
+           'rvalue': False,}],
          [types.Method(name='foo_dispatch',
                        params=[types.Type(inner='TypeContainer<int, float, drmock::Const>')],
                        return_type=types.Type(inner='auto', lvalue_ref=True),
@@ -172,11 +181,15 @@ class TestOverload:
          [{'mangled_name': mock.Mock(return_value='baz'),
            'params': [],
            'const': True,
-           'volatile': False},
+           'volatile': False,
+           'lvalue': False,
+           'rvalue': False,},
           {'mangled_name': mock.Mock(return_value='baz'),
            'params': ['int'],
            'const': True,
-           'volatile': False}],
+           'volatile': False,
+           'lvalue': False,
+           'rvalue': False,}],
          [types.Method(name='baz_dispatch',
                        params=[types.Type(inner='TypeContainer<drmock::Const>')],
                        return_type=types.Type(inner='auto', lvalue_ref=True),
@@ -297,9 +310,9 @@ class TestOverload:
          ['mock.foo_mangled().parent(this);']),
         (True,
          [{'mangled_name': mock.Mock(return_value='foo_mangled'),
-           'params': ['int', 'float', 'double'], 'const': True, 'volatile': False},
+           'params': ['int', 'float', 'double'], 'const': True, 'volatile': False, 'lvalue': False, 'rvalue': False,},
           {'mangled_name': mock.Mock(return_value='foo_mangled'),
-           'params': ['std::unordered_map<int, float>'], 'const': False, 'volatile': False}],
+           'params': ['std::unordered_map<int, float>'], 'const': False, 'volatile': False, 'lvalue': False, 'rvalue': False,}],
          ['mock.template foo_mangled<int, float, double, drmock::Const>().parent(this);',
           'mock.template foo_mangled<std::unordered_map<int, float>>().parent(this);']),
     ])

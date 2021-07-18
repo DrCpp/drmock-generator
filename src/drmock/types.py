@@ -442,6 +442,8 @@ class Method:
         template: The method's template declaration (if available)
         const: Indicates if the method is const-qualified
         volatile: Indicates if the method is volatile-qualified
+        lvalue: Indicates if the method is lvalue qualified
+        rvalue: Indicates if the method is rvalue qualified
         virtual: Indicates if the method is virtual
         pure_virtual: Indicates if the method is pure virtual
         override: Indicates if the method has the ``override`` specifier
@@ -465,6 +467,8 @@ class Method:
     template: Optional[TemplateDecl] = None
     const: bool = False
     volatile: bool = False
+    lvalue: bool = False
+    rvalue: bool = False
     virtual: bool = False
     pure_virtual: bool = False
     override: bool = False
@@ -493,6 +497,8 @@ class Method:
         result += f'({params})'
         result += self.const * ' const'
         result += self.volatile * ' volatile'
+        result += self.lvalue * '&'
+        result += self.rvalue * '&&'
         result += self.noexcept * ' noexcept'
         result += self.override * ' override'  # This must always be last!
         if self.body:
@@ -589,6 +595,10 @@ class Method:
             f.override = True
         if 'volatile' in keywords:
             f.volatile = True
+        if '&' in keywords:
+            f.lvalue = True
+        if '&&' in keywords:
+            f.rvalue = True
 
         # Const qualifiers, virtual keywords, and exception
         # specifications can be obtained using python clang.

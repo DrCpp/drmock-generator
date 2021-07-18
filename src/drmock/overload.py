@@ -18,6 +18,8 @@ SHARED_PTR_PREFIX = 'METHODS_DRMOCK_'
 STATE_OBJECT_NAME = 'STATE_OBJECT_DRMOCK_'
 CONST_ENUM = 'drmock::Const'
 VOLATILE_ENUM = 'drmock::Volatile'
+LVALUE_ENUM = 'drmock::LValueRef'
+RVALUE_ENUM = 'drmock::RValueRef'
 TYPE_CONTAINER = 'TypeContainer'
 PARAMETER_PACK = '... DRMOCK_Ts'
 
@@ -60,24 +62,27 @@ class Overload:
         """Generate the overload's template getter method."""
         f = self._methods[0]  # Representative of the overload.
         result = types.Method('f')  # Use temporary dummy name for initialization!
-        result.template = types.TemplateDecl([PARAMETER_PACK])
         result.name = f.mangled_name()
         result.return_type = types.Type.from_spelling('auto &')
-
-        # Create arguments for dispatch call.
-        dispatch = result.template.get_args()
 
         # If all methods have the same parameter types, then these must
         # automatically be passed as arguments to the dispatch call.
         # NOTE When using strings, spelling differences between equal
         # types (``T *`` vs. ``T*``) can cause this part to malfunction.
         if not self.is_overload():  # all(f.params == each.params for each in self._methods):
-            dispatch.extend(f.params)
+            dispatch = f.params[:]
+        else:
+            result.template = types.TemplateDecl([PARAMETER_PACK])
+            dispatch = result.template.get_args()
 
         # If all methods are const qualified, then the const qualifier
         # must automatically be passed to the dispatch method.
         if all(each.const for each in self._methods):
             dispatch.append(CONST_ENUM)
+        if all(each.lvalue for each in self._methods):
+            dispatch.append(LVALUE_ENUM)
+        if all(each.rvalue for each in self._methods):
+            dispatch.append(RVALUE_ENUM)
 
         result.body = f'return {f.mangled_name()}_dispatch(' + TYPE_CONTAINER + \
             utils.template(dispatch) + '{});'
@@ -117,6 +122,10 @@ class Overload:
                 template_args.append(types.Type(CONST_ENUM))
             if f.volatile:
                 template_args.append(types.Type(VOLATILE_ENUM))
+            if f.lvalue:
+                template_args.append(types.Type(LVALUE_ENUM))
+            if f.rvalue:
+                template_args.append(types.Type(RVALUE_ENUM))
             dispatch.params = [types.Type(TYPE_CONTAINER + utils.template(template_args))]
             dispatch.body = 'return *' + _shared_ptr_name(f.mangled_name(), i) + ';'
             dispatch.access = 'private'
@@ -180,6 +189,10 @@ def _generate_access(f: types.Method, overload: bool) -> str:
             template_args.append(CONST_ENUM)
         if f.volatile:
             template_args.append(VOLATILE_ENUM)
+        if f.lvalue:
+            template_args.append(LVALUE_ENUM)
+        if f.rvalue:
+            template_args.append(RVALUE_ENUM)
         result = MOCK_OBJECT_NAME + '.template ' + f.mangled_name() \
             + utils.template(template_args) + '()'
     else:
