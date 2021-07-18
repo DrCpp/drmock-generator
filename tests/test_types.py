@@ -264,7 +264,15 @@ class TestMethod:
          types.Method(name='f', params=[types.Type(inner=types.Type(inner='T', const=True),
                                                    pointer=True,
                                                    const=True)],
-                      virtual=True, pure_virtual=True))
+                      virtual=True, pure_virtual=True)),
+        (
+            'class _ { virtual void f() const& = 0; };',
+            types.Method(name='f', params=[], const=True, lvalue=True, pure_virtual=True, virtual=True)
+        ),
+        (
+            'class _ { virtual void f() && noexcept = 0; };',
+            types.Method(name='f', params=[], noexcept=True, rvalue=True, pure_virtual=True, virtual=True)
+        ),
     ])
     def test_from_node(self, set_library_file, source, expected):
         root = translator.translate(PATH, source, ['--std=c++11'])
