@@ -18,6 +18,8 @@ SHARED_PTR_PREFIX = 'METHODS_DRMOCK_'
 STATE_OBJECT_NAME = 'STATE_OBJECT_DRMOCK_'
 CONST_ENUM = 'drmock::Const'
 VOLATILE_ENUM = 'drmock::Volatile'
+LVALUE_ENUM = 'drmock::LValueRef'
+RVALUE_ENUM = 'drmock::RValueRef'
 TYPE_CONTAINER = 'TypeContainer'
 PARAMETER_PACK = '... DRMOCK_Ts'
 
@@ -77,6 +79,10 @@ class Overload:
         # must automatically be passed to the dispatch method.
         if all(each.const for each in self._methods):
             dispatch.append(CONST_ENUM)
+        if all(each.lvalue for each in self._methods):
+            dispatch.append(LVALUE_ENUM)
+        if all(each.rvalue for each in self._methods):
+            dispatch.append(RVALUE_ENUM)
 
         result.body = f'return {f.mangled_name()}_dispatch(' + TYPE_CONTAINER + \
             utils.template(dispatch) + '{});'
@@ -116,6 +122,10 @@ class Overload:
                 template_args.append(types.Type(CONST_ENUM))
             if f.volatile:
                 template_args.append(types.Type(VOLATILE_ENUM))
+            if f.lvalue:
+                template_args.append(types.Type(LVALUE_ENUM))
+            if f.rvalue:
+                template_args.append(types.Type(RVALUE_ENUM))
             dispatch.params = [types.Type(TYPE_CONTAINER + utils.template(template_args))]
             dispatch.body = 'return *' + _shared_ptr_name(f.mangled_name(), i) + ';'
             dispatch.access = 'private'
@@ -179,6 +189,10 @@ def _generate_access(f: types.Method, overload: bool) -> str:
             template_args.append(CONST_ENUM)
         if f.volatile:
             template_args.append(VOLATILE_ENUM)
+        if f.lvalue:
+            template_args.append(LVALUE_ENUM)
+        if f.rvalue:
+            template_args.append(RVALUE_ENUM)
         result = MOCK_OBJECT_NAME + '.template ' + f.mangled_name() \
             + utils.template(template_args) + '()'
     else:
