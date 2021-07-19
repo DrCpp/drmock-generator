@@ -280,7 +280,7 @@ def _generate_mock_implementation(name: str,
             object/implementation class
     """
     result = types.Class(name)
-    result.enclosing_namespace = class_.enclosing_namespace
+    result.enclosing_namespace = _generate_enclosing_namespace(class_, namespace)
     result.template = class_.template
     result.q_object = class_.q_object
     result.parent = class_.full_name()
