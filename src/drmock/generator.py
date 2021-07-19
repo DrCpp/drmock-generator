@@ -15,7 +15,7 @@ from drmock import types
 from drmock import translator
 from drmock import utils
 
-MOCK_OBJECT_PREFIX = 'DRMOCK_Object_'
+MOCK_OBJECT_PREFIX = 'DRMOCK_OBJECT'
 MOCK_OBJECT_ENCLOSING_NAMESPACE = ('drmock', 'mock_implementation')
 METHOD_COLLECTION_NAME = 'methods'
 METHOD_CPP_CLASS = 'drmock::Method'
