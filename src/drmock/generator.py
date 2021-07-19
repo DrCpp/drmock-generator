@@ -16,7 +16,6 @@ from drmock import translator
 from drmock import utils
 
 MOCK_OBJECT_PREFIX = 'DRMOCK_OBJECT'
-DEFAULT_NAMESPACE = None
 METHOD_COLLECTION_NAME = 'methods'
 METHOD_CPP_CLASS = '::drmock::Method'
 INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS_'
@@ -109,9 +108,9 @@ def _main_impl(args: str, input_header: str) -> tuple[str, str]:
 
     mock_implementation_name = utils.swap(args.input_class, args.output_class, class_.name)
 
-    mock_object = _generate_mock_object(class_, args.access)
+    mock_object = _generate_mock_object(class_, args.access, args.namespace)
     mock_implementation = _generate_mock_implementation(
-        mock_implementation_name, class_, args.access)
+        mock_implementation_name, class_, args.access, args.namespace)
 
     new_header = _generate_header(class_, mock_object, mock_implementation, args.input_path)
     new_source = _generate_source(class_, args.output_path)
@@ -186,16 +185,19 @@ def _generate_source(class_: types.Class, header_path: str) -> str:
     return result
 
 
-def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class:
+def _generate_mock_object(class_: types.Class, access: list[str], namespace: str) -> types.Class:
     """Generate the ``types.Class`` object of the mock object.
 
     Args:
         class_:
             The mocked class (not the mock object/implementation class!)
         access: Only mock methods with these access specifiers
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
     """
     result = types.Class(_generate_mock_object_class_name(class_))
-    result.enclosing_namespace = _generate_enclosing_namespace(class_, DEFAULT_NAMESPACE)
+    result.enclosing_namespace = _generate_enclosing_namespace(class_, namespace)
     result.template = class_.template
     overloads = overload.get_overloads_of_class(class_, access)
 
@@ -264,7 +266,8 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
 
 def _generate_mock_implementation(name: str,
                                   class_: types.Class,
-                                  access: list[str]) -> types.Class:
+                                  access: list[str],
+                                  namespace: str) -> types.Class:
     """Generate the ``types.Class`` object of the mock implementation.
 
     Args:
@@ -272,6 +275,9 @@ def _generate_mock_implementation(name: str,
         class_:
             The mocked class (not the mock object/implementation class!)
         access: Only mock methods with these access specifiers
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
     """
     result = types.Class(name)
     result.enclosing_namespace = class_.enclosing_namespace
@@ -296,7 +302,7 @@ def _generate_mock_implementation(name: str,
 
     mock_implementation = types.Variable(
         name=overload.MOCK_OBJECT_NAME,
-        type=_generate_mock_object_full_class_name(class_),
+        type=_generate_mock_object_full_class_name(class_, namespace),
         mutable=True)
     result.members.append(mock_implementation)
 
@@ -361,16 +367,19 @@ def _generate_mock_object_class_name(class_: types.Class) -> str:
     return MOCK_OBJECT_PREFIX + class_.name
 
 
-def _generate_mock_object_full_class_name(class_: types.Class):
+def _generate_mock_object_full_class_name(class_: types.Class, namespace: str):
     """Generate the mock object's name including namespace specifiers
     and template params.
 
     Args:
         class_:
             The mocked class (not the mock object/implementation class!)
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
     """
     result = ''
-    result += ''.join(each + '::' for each in _generate_enclosing_namespace(class_, DEFAULT_NAMESPACE))
+    result += ''.join(each + '::' for each in _generate_enclosing_namespace(class_, namespace))
     result += _generate_mock_object_class_name(class_)
     if class_.template:
         result += utils.template(class_.template.get_args())
@@ -384,7 +393,9 @@ def _generate_enclosing_namespace(class_: types.Class, namespace: str) -> list[s
     Args:
         class_:
             The mocked class (not the mock object/implementation class!)
-        namespace: The absolute or relative enclosing namespace 
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
 
     (An absolute namespace is specified using a leading `'::'`.)
     """
