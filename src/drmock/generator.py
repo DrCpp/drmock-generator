@@ -400,7 +400,7 @@ def _generate_enclosing_namespace(class_: types.Class, namespace: str) -> list[s
     (An absolute namespace is specified using a leading `'::'`.)
     """
     if not namespace:
-        return []
+        return class_.enclosing_namespace[:]
     if namespace.startswith('::'):
         return namespace.split('::')
     return class_.enclosing_namespace + namespace.split('::')
