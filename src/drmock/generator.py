@@ -278,7 +278,7 @@ def _generate_mock_implementation(name: str,
     result.template = class_.template
     result.q_object = class_.q_object
     result.parent = class_.full_name()
-    result.final = True
+    # result.final = True
 
     result.members = class_.get_type_aliases()
 
