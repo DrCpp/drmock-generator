@@ -53,9 +53,9 @@ def test_explicit_instantiation_definition(expr, expected):
 
 
 @pytest.mark.parametrize('parent, return_type, params, expected', [
-    ('Foo', 'void', [], 'drmock::Method<Foo, void>'),
+    ('Foo', 'void', [], '::drmock::Method<Foo, void>'),
     ('Bar', 'float&', [types.Type(inner='T', const=True), types.Type(
-        inner='int', lvalue_ref=True)], 'drmock::Method<Bar, float&, T, int>')
+        inner='int', lvalue_ref=True)], '::drmock::Method<Bar, float&, T, int>')
 ])
 def test_generate_method_template(parent, return_type, params, expected):
     method = types.Method(name='f', return_type=return_type, params=params)
