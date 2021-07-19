@@ -16,12 +16,14 @@ from drmock import utils
 MOCK_OBJECT_NAME = 'mock'
 SHARED_PTR_PREFIX = 'METHODS_DRMOCK_'
 STATE_OBJECT_NAME = 'STATE_OBJECT_DRMOCK_'
-CONST_ENUM = 'drmock::Const'
-VOLATILE_ENUM = 'drmock::Volatile'
-LVALUE_ENUM = 'drmock::LValueRef'
-RVALUE_ENUM = 'drmock::RValueRef'
-TYPE_CONTAINER = 'TypeContainer'
+DRMOCK_NAMESPACE = '::drmock'
+CONST_ENUM = DRMOCK_NAMESPACE + '::Const'
+VOLATILE_ENUM = DRMOCK_NAMESPACE + '::Volatile'
+LVALUE_ENUM = DRMOCK_NAMESPACE + '::LValueRef'
+RVALUE_ENUM = DRMOCK_NAMESPACE + '::RValueRef'
+TYPE_CONTAINER = DRMOCK_NAMESPACE + '::TypeContainer'
 PARAMETER_PACK = '... DRMOCK_Ts'
+MOVE_IF_NOT_COPY_CONSTRUCTIBLE = DRMOCK_NAMESPACE + '::moveIfNotCopyConstructible'
 
 
 def get_overloads_of_class(class_: types.Class,
@@ -96,7 +98,7 @@ class Overload:
             template_args = [self._parent.full_name(), f.return_type]
             template_args.extend(each.get_decayed() for each in f.params)
 
-            value_type = 'Method' + utils.template(template_args)
+            value_type = '::drmock::Method' + utils.template(template_args)
             ptr = f'std::make_shared<{value_type}>("", {STATE_OBJECT_NAME})'
             shared_ptr = types.Variable(
                 name=_shared_ptr_name(f.mangled_name(), i),
@@ -157,7 +159,7 @@ class Overload:
                 impl.body += dispatch_call
             else:
                 impl.body += f'auto& result = *{dispatch_call}\n'
-                impl.body += f'return std::forward<{f.return_type}>(drmock::moveIfNotCopyConstructible(result));'  # noqa: E501
+                impl.body += f'return std::forward<{f.return_type}>({MOVE_IF_NOT_COPY_CONSTRUCTIBLE}(result));'  # noqa: E501
 
             impl.access = 'public'
 

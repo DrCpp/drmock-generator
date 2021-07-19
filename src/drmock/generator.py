@@ -16,9 +16,9 @@ from drmock import translator
 from drmock import utils
 
 MOCK_OBJECT_PREFIX = 'DRMOCK_OBJECT'
-MOCK_OBJECT_ENCLOSING_NAMESPACE = ('drmock', 'mock_implementation')
+DEFAULT_NAMESPACE = None
 METHOD_COLLECTION_NAME = 'methods'
-METHOD_CPP_CLASS = 'drmock::Method'
+METHOD_CPP_CLASS = '::drmock::Method'
 INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS_'
 DRMOCK_INCLUDE_PATH = 'DrMock/'
 MACRO_PREFIX = 'DRMOCK_'
@@ -195,7 +195,7 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
         access: Only mock methods with these access specifiers
     """
     result = types.Class(_generate_mock_object_class_name(class_))
-    result.enclosing_namespace = MOCK_OBJECT_ENCLOSING_NAMESPACE
+    result.enclosing_namespace = _generate_enclosing_namespace(class_, DEFAULT_NAMESPACE)
     result.template = class_.template
     overloads = overload.get_overloads_of_class(class_, access)
 
@@ -209,8 +209,8 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
     # NOTE State object must be default initialized _before_ the
     # shared_ptrs, so it must occur above them in the member list.
     state_object = types.Variable(
-        overload.STATE_OBJECT_NAME, 'std::shared_ptr<StateObject>',
-        ['std::make_shared<StateObject>()'], access='private')
+        overload.STATE_OBJECT_NAME, 'std::shared_ptr<::drmock::StateObject>',
+        ['std::make_shared<::drmock::StateObject>()'], access='private')
     result.members.append(state_object)
 
     shared_ptrs = sum([each.generate_shared_ptrs() for each in overloads], [])
@@ -218,7 +218,7 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
 
     method_collection = types.Variable(
         name=METHOD_COLLECTION_NAME,
-        type='MethodCollection',
+        type='::drmock::MethodCollection',
         default_args=['{' + ', '.join(each.name for each in shared_ptrs) + '}'],
         access='private')
     result.members.append(method_collection)
@@ -370,8 +370,26 @@ def _generate_mock_object_full_class_name(class_: types.Class):
             The mocked class (not the mock object/implementation class!)
     """
     result = ''
-    result += ''.join(each + '::' for each in MOCK_OBJECT_ENCLOSING_NAMESPACE)
+    result += ''.join(each + '::' for each in _generate_enclosing_namespace(class_, DEFAULT_NAMESPACE))
     result += _generate_mock_object_class_name(class_)
     if class_.template:
         result += utils.template(class_.template.get_args())
     return result
+
+
+def _generate_enclosing_namespace(class_: types.Class, namespace: str) -> list[str]:
+    """Generate the enclosing namespace of mock object and
+    implementation.
+
+    Args:
+        class_:
+            The mocked class (not the mock object/implementation class!)
+        namespace: The absolute or relative enclosing namespace 
+
+    (An absolute namespace is specified using a leading `'::'`.)
+    """
+    if not namespace:
+        return []
+    if namespace.startswith('::'):
+        return namespace.split('::')
+    return class_.enclosing_namespace + namespace.split('::')
