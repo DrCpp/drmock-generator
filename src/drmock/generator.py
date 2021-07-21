@@ -16,7 +16,7 @@ from drmock import translator
 from drmock import utils
 
 MOCK_OBJECT_PREFIX = 'DRMOCK_OBJECT'
-METHOD_COLLECTION_NAME = 'methods'
+CONTROLLER_NAME = 'control'
 CONTROLLER_CPP_CLASS = '::drmock::Controller'
 METHOD_CPP_CLASS = '::drmock::Method'
 INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS_'
@@ -220,10 +220,13 @@ def _generate_mock_object(class_: types.Class, access: list[str], namespace: str
     result.members += shared_ptrs
 
     method_collection = types.Variable(
-        name=METHOD_COLLECTION_NAME,
+        name=CONTROLLER_NAME,
         type=CONTROLLER_CPP_CLASS,
-        default_args=['{' + ', '.join(each.name for each in shared_ptrs) + '}'],
-        access='private')
+        default_args=[
+            '{' + ', '.join(each.name for each in shared_ptrs) + '}',
+            overload.STATE_OBJECT_NAME
+        ],
+        access='public')
     result.members.append(method_collection)
 
     # NOTE It's important to add the dispatch methods _before_ the
@@ -251,13 +254,13 @@ def _generate_mock_object(class_: types.Class, access: list[str], namespace: str
         return_type='std::string',
         const=True,
         params=[],
-        body='return methods.makeFormattedErrorString();')
+        body=f'return {CONTROLLER_NAME}.makeFormattedErrorString();')
     result.members.append(make_formatted_error_string)
 
     verify = types.Method(
         name='verify',
         return_type='bool',
-        body=f'return {METHOD_COLLECTION_NAME}.verify();')
+        body=f'return {CONTROLLER_NAME}.verify();')
     result.members.append(verify)
 
     result.members += [each.generate_getter() for each in overloads]
