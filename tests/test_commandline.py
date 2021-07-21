@@ -15,7 +15,7 @@ from drmock import utils
 def test_example(script_runner):
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, 'example_mock.h')
-        ret = script_runner.run('drmock-generator', '--input-class', 'Derived', '--output-class', 'DerivedMock', 'resources/example.h', str(path), '-n', 'ns', '-f --std=c++17')
+        ret = script_runner.run('drmock-generator', '--input-class', 'Derived', '--output-class', 'DerivedMock', 'resources/example.h', str(path), '-n', 'ns', '-c', 'ctrl', '-f --std=c++17')
     assert ret.success
 
 

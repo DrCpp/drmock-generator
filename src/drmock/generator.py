@@ -16,7 +16,6 @@ from drmock import translator
 from drmock import utils
 
 MOCK_OBJECT_PREFIX = 'DRMOCK_OBJECT'
-CONTROLLER_NAME = 'control'
 CONTROLLER_CPP_CLASS = '::drmock::Controller'
 METHOD_CPP_CLASS = '::drmock::Method'
 INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS_'
@@ -109,7 +108,7 @@ def _main_impl(args: str, input_header: str) -> tuple[str, str]:
 
     mock_implementation_name = utils.swap(args.input_class, args.output_class, class_.name)
 
-    mock_object = _generate_mock_object(class_, args.access, args.namespace)
+    mock_object = _generate_mock_object(class_, args.access, args.namespace, args.controller)
     mock_implementation = _generate_mock_implementation(
         mock_implementation_name, class_, args.access, args.namespace)
 
@@ -186,7 +185,10 @@ def _generate_source(class_: types.Class, header_path: str) -> str:
     return result
 
 
-def _generate_mock_object(class_: types.Class, access: list[str], namespace: str) -> types.Class:
+def _generate_mock_object(class_: types.Class,
+                          access: list[str],
+                          namespace: str,
+                          controller: str) -> types.Class:
     """Generate the ``types.Class`` object of the mock object.
 
     Args:
@@ -196,6 +198,8 @@ def _generate_mock_object(class_: types.Class, access: list[str], namespace: str
         namespace:
             The absolute or relative enclosing namespace for the mock
             object/implementation class
+        controller:
+            The name of the diagnostics class
     """
     result = types.Class(_generate_mock_object_class_name(class_))
     result.enclosing_namespace = _generate_enclosing_namespace(class_, namespace)
@@ -220,7 +224,7 @@ def _generate_mock_object(class_: types.Class, access: list[str], namespace: str
     result.members += shared_ptrs
 
     method_collection = types.Variable(
-        name=CONTROLLER_NAME,
+        name=controller,
         type=CONTROLLER_CPP_CLASS,
         default_args=[
             '{' + ', '.join(each.name for each in shared_ptrs) + '}',
@@ -235,34 +239,6 @@ def _generate_mock_object(class_: types.Class, access: list[str], namespace: str
     # function 'f_dispatch' with # deduced return type cannot be used
     # before it is defined
     result.members += sum([each.generate_dispatch_methods() for each in overloads], [])
-
-    verify_state1 = types.Method(
-        name='verifyState',
-        return_type='bool',
-        params=['const std::string& state'],
-        body=f'return {overload.STATE_OBJECT_NAME}->get() == state;')
-    verify_state2 = types.Method(
-        name='verifyState',
-        return_type='bool',
-        params=['const std::string& slot', 'const std::string& state'],
-        body=f'return {overload.STATE_OBJECT_NAME}->get(slot) == state;')
-    result.members.append(verify_state1)
-    result.members.append(verify_state2)
-
-    make_formatted_error_string = types.Method(
-        name='makeFormattedErrorString',
-        return_type='std::string',
-        const=True,
-        params=[],
-        body=f'return {CONTROLLER_NAME}.makeFormattedErrorString();')
-    result.members.append(make_formatted_error_string)
-
-    verify = types.Method(
-        name='verify',
-        return_type='bool',
-        body=f'return {CONTROLLER_NAME}.verify();')
-    result.members.append(verify)
-
     result.members += [each.generate_getter() for each in overloads]
 
     return result
