@@ -17,6 +17,7 @@ from drmock import utils
 
 MOCK_OBJECT_PREFIX = 'DRMOCK_OBJECT'
 METHOD_COLLECTION_NAME = 'methods'
+CONTROLLER_CPP_CLASS = '::drmock::Controller'
 METHOD_CPP_CLASS = '::drmock::Method'
 INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS_'
 DRMOCK_INCLUDE_PATH = 'DrMock/'
@@ -220,7 +221,7 @@ def _generate_mock_object(class_: types.Class, access: list[str], namespace: str
 
     method_collection = types.Variable(
         name=METHOD_COLLECTION_NAME,
-        type='::drmock::MethodCollection',
+        type=CONTROLLER_CPP_CLASS,
         default_args=['{' + ', '.join(each.name for each in shared_ptrs) + '}'],
         access='private')
     result.members.append(method_collection)
