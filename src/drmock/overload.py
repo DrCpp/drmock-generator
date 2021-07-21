@@ -14,8 +14,8 @@ from drmock import types
 from drmock import utils
 
 MOCK_OBJECT_NAME = 'mock'
-SHARED_PTR_PREFIX = 'METHODS_DRMOCK_'
-STATE_OBJECT_NAME = 'STATE_OBJECT_DRMOCK_'
+SHARED_PTR_PREFIX = 'DRMOCK_METHOD_PTR'
+STATE_OBJECT_NAME = 'DRMOCK_STATE_OBJECT_'
 DRMOCK_NAMESPACE = '::drmock'
 CONST_ENUM = DRMOCK_NAMESPACE + '::Const'
 VOLATILE_ENUM = DRMOCK_NAMESPACE + '::Volatile'
@@ -24,6 +24,7 @@ RVALUE_ENUM = DRMOCK_NAMESPACE + '::RValueRef'
 TYPE_CONTAINER = DRMOCK_NAMESPACE + '::TypeContainer'
 PARAMETER_PACK = '... DRMOCK_Ts'
 MOVE_IF_NOT_COPY_CONSTRUCTIBLE = DRMOCK_NAMESPACE + '::moveIfNotCopyConstructible'
+DISPATCH_PREFIX = 'DRMOCK_DISPATCH'
 
 
 def get_overloads_of_class(class_: types.Class,
@@ -86,7 +87,7 @@ class Overload:
         if all(each.rvalue for each in self._methods):
             dispatch.append(RVALUE_ENUM)
 
-        result.body = f'return {f.mangled_name()}_dispatch(' + TYPE_CONTAINER + \
+        result.body = f'return {_dispatch_name(f.mangled_name())}(' + TYPE_CONTAINER + \
             utils.template(dispatch) + '{});'
         result.access = 'public'
         return result
@@ -113,7 +114,7 @@ class Overload:
         result = []
         for i, f in enumerate(self._methods):
             dispatch = types.Method('f')  # Temporary name for init.
-            dispatch.name = f.mangled_name() + '_dispatch'
+            dispatch.name = _dispatch_name(f.mangled_name())
             dispatch.return_type = types.Type('auto', lvalue_ref=True)
 
             # The method's cv qualifiers are stored in the type
@@ -176,6 +177,10 @@ class Overload:
 
 def _shared_ptr_name(mangled_name: str, i: int) -> str:
     return f'{SHARED_PTR_PREFIX}{mangled_name}_{i}'
+
+
+def _dispatch_name(mangled_name: str) -> str:
+    return DISPATCH_PREFIX + mangled_name
 
 
 def _generate_access(f: types.Method, overload: bool) -> str:
