@@ -104,7 +104,7 @@ class Overload:
             template_args.extend(each.get_decayed() for each in f.params)
 
             value_type = '::drmock::Method' + utils.template(template_args)
-            ptr = f'std::make_shared<{value_type}>("", {STATE_OBJECT_NAME})'
+            ptr = f'std::make_shared<{value_type}>("{f.name}", {STATE_OBJECT_NAME})'
             shared_ptr = types.Variable(
                 name=_shared_ptr_name(f.mangled_name(), i),
                 type=f'std::shared_ptr<{value_type}>',

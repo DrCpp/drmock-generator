@@ -84,57 +84,66 @@ class TestOverload:
         collection = overload.Overload(parent, methods)
         assert collection.generate_getter() == expected
 
-    @pytest.mark.parametrize('full_name, kwargs, expected', [
-        ('Foo',
-         [{'mangled_name': mock.Mock(return_value='foo'),
-           'params': [], 'const': True, 'return_type': 'int'},
-          {'mangled_name': mock.Mock(return_value='foo'),
-           'params': [types.Type('float')],
-           'const': False,
-           'return_type': 'int'}],
-         [types.Variable(name='DRMOCK_METHOD_PTRfoo_0',
-                         type='std::shared_ptr<::drmock::Method<Foo, int>>',
-                         default_args=[
-                             'std::make_shared<::drmock::Method<Foo, int>>("", DRMOCK_STATE_OBJECT_)'],
-                         access='private'),
-          types.Variable(name='DRMOCK_METHOD_PTRfoo_1',
-                         type='std::shared_ptr<::drmock::Method<Foo, int, float>>',
-                         default_args=[
-                             'std::make_shared<::drmock::Method<Foo, int, float>>("", DRMOCK_STATE_OBJECT_)'],
-                         access='private')]),
-        ('Bar',
-         [{'mangled_name': mock.Mock(return_value='bar'),
-           'params': [types.Type('int'), types.Type('float')],
-           'const': True,
-           'return_type': 'void'}],
-         [types.Variable(name='DRMOCK_METHOD_PTRbar_0',
-                         type='std::shared_ptr<::drmock::Method<Bar, void, int, float>>',
-                         default_args=[
-                             'std::make_shared<::drmock::Method<Bar, void, int, float>>("", DRMOCK_STATE_OBJECT_)'],
-                         access='private')]),
-        ('Baz',
-         [{'mangled_name': mock.Mock(return_value='baz'),
-           'params': [],
-           'const': True,
-           'return_type': 'const int&'},
-          {'mangled_name': mock.Mock(return_value='baz'),
-           'params': [types.Type('int', lvalue_ref=True)],
-           'const': True,
-           'return_type': 'const int&'}],
-         [types.Variable(name='DRMOCK_METHOD_PTRbaz_0',
-                         type='std::shared_ptr<::drmock::Method<Baz, const int&>>',
-                         default_args=[
-                             'std::make_shared<::drmock::Method<Baz, const int&>>("", DRMOCK_STATE_OBJECT_)'],
-                         access='private'),
-          types.Variable(name='DRMOCK_METHOD_PTRbaz_1',
-                         type='std::shared_ptr<::drmock::Method<Baz, const int&, int>>',
-                         default_args=[
-                             'std::make_shared<::drmock::Method<Baz, const int&, int>>("", DRMOCK_STATE_OBJECT_)'],
-                         access='private')]),
+    @pytest.mark.parametrize('full_name, methods, expected', [
+        pytest.param(
+            'Foo',
+            [
+                types.Method(name='foo', params=[], const=True, return_type='int'),
+                types.Method(name='foo', params=[types.Type('float')], const=False, return_type='int')
+            ],
+            [
+                types.Variable(
+                    name='DRMOCK_METHOD_PTRfoo_0',
+                    type='std::shared_ptr<::drmock::Method<Foo, int>>',
+                    default_args=[
+                        'std::make_shared<::drmock::Method<Foo, int>>("foo", DRMOCK_STATE_OBJECT_)'],
+                    access='private'),
+                types.Variable(name='DRMOCK_METHOD_PTRfoo_1',
+                    type='std::shared_ptr<::drmock::Method<Foo, int, float>>',
+                    default_args=[
+                        'std::make_shared<::drmock::Method<Foo, int, float>>("foo", DRMOCK_STATE_OBJECT_)'],
+                    access='private')
+             ]
+        ),
+        pytest.param(
+            'Bar',
+            [
+                types.Method(name='bar', params=[types.Type('int'), types.Type('float')], const=True, return_type='void'),
+            ],
+            [
+                types.Variable(
+                    name='DRMOCK_METHOD_PTRbar_0',
+                    type='std::shared_ptr<::drmock::Method<Bar, void, int, float>>',
+                    default_args=[
+                        'std::make_shared<::drmock::Method<Bar, void, int, float>>("bar", DRMOCK_STATE_OBJECT_)'],
+                    access='private')
+            ]
+        ),
+        pytest.param(
+            'Baz',
+             [
+                 types.Method(name='baz', params=[], const=True, return_type='const int&'),
+                 types.Method(name='baz', params=[types.Type('int', lvalue_ref=True)], const=True, return_type='const int&'),
+             ],
+             [
+                types.Variable(
+                    name='DRMOCK_METHOD_PTRbaz_0',
+                    type='std::shared_ptr<::drmock::Method<Baz, const int&>>',
+                    default_args=[
+                        'std::make_shared<::drmock::Method<Baz, const int&>>("baz", DRMOCK_STATE_OBJECT_)'
+                    ],
+                    access='private'),
+                types.Variable(
+                    name='DRMOCK_METHOD_PTRbaz_1',
+                    type='std::shared_ptr<::drmock::Method<Baz, const int&, int>>',
+                    default_args=[
+                        'std::make_shared<::drmock::Method<Baz, const int&, int>>("baz", DRMOCK_STATE_OBJECT_)'],
+                    access='private')
+             ]
+         ),
     ])
-    def test_generate_shared_ptrs(self, full_name, kwargs, expected, mocker):
+    def test_generate_shared_ptrs(self, full_name, methods, expected, mocker):
         parent = mocker.Mock(full_name=mocker.Mock(return_value=full_name))
-        methods = [mocker.Mock(**each) for each in kwargs]
         collection = overload.Overload(parent, methods)
         assert collection.generate_shared_ptrs() == expected
 
