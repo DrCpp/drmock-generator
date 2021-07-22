@@ -56,11 +56,6 @@ class Overload:
         self._parent = parent
         self._methods = methods
 
-    def is_overload(self) -> bool:
-        """Check if ``self`` is a proper overload (with at least two
-        methods)."""
-        return len(self._methods) > 1
-
     def generate_getter(self) -> types.Method:
         """Generate the overload's template getter method."""
         f = self._methods[0]  # Representative of the overload.
@@ -68,24 +63,33 @@ class Overload:
         result.name = f.mangled_name()
         result.return_type = types.Type.from_spelling('auto &')
 
+        dispatch = []
         # If all methods have the same parameter types, then these must
         # automatically be passed as arguments to the dispatch call.
         # NOTE When using strings, spelling differences between equal
         # types (``T *`` vs. ``T*``) can cause this part to malfunction.
-        if not self.is_overload():  # all(f.params == each.params for each in self._methods):
-            dispatch = f.params[:]
-        else:
+        if self._all_same_params():  # Not overloaded or the only difference is cv-qualifiers!
+            dispatch += copy.deepcopy(f.params)
+        if self._overloaded():
+            # If the overloads differ in their params, then the
+            # PARAMETER_PACK serves as leading part of the
+            # dispatch template and holds the parameter types (and maybe
+            # the qualifiers). If the overloads differ only in their
+            # qualifiers, then the PARAMETER_PACK serves as the tail end
+            # of the dispatch template, following the function
+            # parameters added in the if-branch above.
             result.template = types.TemplateDecl([PARAMETER_PACK])
-            dispatch = result.template.get_args()
+            dispatch += result.template.get_args()
 
-        # If all methods are const qualified, then the const qualifier
-        # must automatically be passed to the dispatch method.
-        if all(each.const for each in self._methods):
-            dispatch.append(CONST_ENUM)
-        if all(each.lvalue for each in self._methods):
-            dispatch.append(LVALUE_ENUM)
-        if all(each.rvalue for each in self._methods):
-            dispatch.append(RVALUE_ENUM)
+        # If all methods have the same qualifier, they may be
+        # automatically passed to the dispatch method.
+        if self._all_same_qualifiers():
+            if all(each.const for each in self._methods):
+                dispatch.append(CONST_ENUM)
+            if all(each.lvalue for each in self._methods):
+                dispatch.append(LVALUE_ENUM)
+            if all(each.rvalue for each in self._methods):
+                dispatch.append(RVALUE_ENUM)
 
         result.body = f'return {_dispatch_name(f.mangled_name())}(' + TYPE_CONTAINER + \
             utils.template(dispatch) + '{});'
@@ -149,7 +153,7 @@ class Overload:
             # If the method is not overloaded, the correct template
             # arguments are automatically used, and need not be manually
             # inserted.
-            dispatch_call = _generate_access(f, self.is_overload())
+            dispatch_call = self._generate_access(f)
             dispatch_call += '.call(' + ', '.join(
                 _unpack_and_move(f'a{i}', each) for i, each in enumerate(f.params)) + ');'
 
@@ -171,8 +175,53 @@ class Overload:
     def generate_set_parent(self) -> list[str]:
         """For each function, return a C++ statement to set the parent
         class."""
-        return [_generate_access(each, self.is_overload()) + '.parent(this);'
-                for each in self._methods]
+        return [self._generate_access(each) + '.parent(this);' for each in self._methods]
+
+    def _overloaded(self) -> bool:
+        """Check if ``self`` is a proper overload (with at least two
+        methods)."""
+        return len(self._methods) > 1
+
+    def _all_same_params(self) -> bool:
+        """Check if all overloads differ only by qualifier."""
+        params = self._methods[0].params
+        return all(elem.params == params for elem in self._methods)
+
+    def _all_same_qualifiers(self) -> bool:
+        f = self._methods[0]
+        qualifiers = (f.const, f.lvalue, f.rvalue)
+        return all(
+            (elem.const, elem.lvalue, elem.rvalue) == qualifiers
+            for elem in self._methods
+        )
+
+    def _generate_access(self, f: types.Method) -> str:
+        """Return code for accessing method ptr from mock object.
+
+        Args:
+            f: The method object
+            overload: True if ``f`` is overloaded
+            const: True if all overloads of ``f`` are const-qualified
+            ref: True if all overloads of ``f`` are ref-qualified
+        """
+        if self._overloaded():
+            template_args = []
+            if not self._all_same_params():
+                template_args += copy.deepcopy(f.params)
+            if not self._all_same_qualifiers():
+                if f.const:
+                    template_args.append(CONST_ENUM)
+                if f.volatile:
+                    template_args.append(VOLATILE_ENUM)
+                if f.lvalue:
+                    template_args.append(LVALUE_ENUM)
+                if f.rvalue:
+                    template_args.append(RVALUE_ENUM)
+            result = MOCK_OBJECT_NAME + '.template ' + f.mangled_name() \
+                + utils.template(template_args) + '()'
+        else:
+            result = MOCK_OBJECT_NAME + '.' + f.mangled_name() + '()'
+        return result
 
 
 def _shared_ptr_name(mangled_name: str, i: int) -> str:
@@ -181,30 +230,6 @@ def _shared_ptr_name(mangled_name: str, i: int) -> str:
 
 def _dispatch_name(mangled_name: str) -> str:
     return DISPATCH_PREFIX + mangled_name
-
-
-def _generate_access(f: types.Method, overload: bool) -> str:
-    """Return code for accessing method ptr from mock object.
-
-    Args:
-        f: The method object
-        overload: True if ``f`` is overloaded
-    """
-    if overload:
-        template_args = copy.deepcopy(f.params)
-        if f.const:
-            template_args.append(CONST_ENUM)
-        if f.volatile:
-            template_args.append(VOLATILE_ENUM)
-        if f.lvalue:
-            template_args.append(LVALUE_ENUM)
-        if f.rvalue:
-            template_args.append(RVALUE_ENUM)
-        result = MOCK_OBJECT_NAME + '.template ' + f.mangled_name() \
-            + utils.template(template_args) + '()'
-    else:
-        result = MOCK_OBJECT_NAME + '.' + f.mangled_name() + '()'
-    return result
 
 
 def _unpack_and_move(name: str, type_: types.Type):
