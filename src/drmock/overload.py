@@ -233,6 +233,8 @@ def _dispatch_name(mangled_name: str) -> str:
 
 
 def _unpack_and_move(name: str, type_: types.Type):
-    result = name if type_.lvalue_ref else f'std::move({name})'
+    # result = name if type_.lvalue_ref else f'std::move({name})'
+    template = str(type_).replace('...', '')
+    result = f'std::forward<{template}>({name})'
     result += type_.parameter_pack * '...'
     return result

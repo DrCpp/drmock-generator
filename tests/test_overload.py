@@ -218,13 +218,13 @@ class TestOverload:
                        const=True, return_type=types.Type('int'), body='return 0;')],
          [types.Method(name='bar', params=['int a0'], override=True,
                        const=True, return_type=types.Type('int'),
-                       body=('auto& result = *mock.bar().call(std::move(a0));\n'
+                       body=('auto& result = *mock.bar().call(std::forward<int>(a0));\n'
                              'return std::forward<int>(::drmock::moveIfNotCopyConstructible(result));'))]),
         ([types.Method(name='operator<=', params=[types.Type('int'), types.Type('int')],
                        return_type=types.Type('bool'), body='...', virtual=True)],
          [types.Method(name='operator<=', params=['int a0', 'int a1'],
                        return_type=types.Type('bool'), override=True,
-                       body=('auto& result = *mock.operatorLesserOrEqual().call(std::move(a0), std::move(a1));\n'
+                       body=('auto& result = *mock.operatorLesserOrEqual().call(std::forward<int>(a0), std::forward<int>(a1));\n'
                              'return std::forward<bool>(::drmock::moveIfNotCopyConstructible(result));'))]),
         ([types.Method(name='bar', return_type=types.Type('void'),
                        const=False,
@@ -266,7 +266,7 @@ class TestOverload:
                        override=True,
                        params=['int a0'],
                        return_type=types.Type('void'),
-                       body='mock.template bar<int>().call(std::move(a0));'),
+                       body='mock.template bar<int>().call(std::forward<int>(a0));'),
           types.Method(name='bar',
                        override=True,
                        return_type=types.Type('void'),
@@ -291,14 +291,14 @@ class TestOverload:
                        return_type=types.Type(inner='int', lvalue_ref=True),
                        params=['int a0', 'const float & a1', 'std::vector<double> && a2'],
                        override=True,
-                       body=('auto& result = *mock.template foo<int, const float &, std::vector<double> &&>().call(std::move(a0), a1, std::move(a2));\n'
+                       body=('auto& result = *mock.template foo<int, const float &, std::vector<double> &&>().call(std::forward<int>(a0), std::forward<const float &>(a1), std::forward<std::vector<double> &&>(a2));\n'
                              'return std::forward<int &>(::drmock::moveIfNotCopyConstructible(result));')),
           types.Method(name='foo',
                        const=True,
                        return_type=types.Type.from_spelling('const int &'),
                        params=['const float & a0', 'Ts && ... a1'],
                        override=True,
-                       body=('auto& result = *mock.template foo<const float &, Ts && ..., ::drmock::Const>().call(a0, std::move(a1)...);\n'
+                       body=('auto& result = *mock.template foo<const float &, Ts && ..., ::drmock::Const>().call(std::forward<const float &>(a0), std::forward<Ts && >(a1)...);\n'
                              'return std::forward<const int &>(::drmock::moveIfNotCopyConstructible(result));'))]),
     ])
     def test_generate_mock_implementations(self, methods, expected):
