@@ -219,13 +219,13 @@ class TestOverload:
          [types.Method(name='bar', params=['int a0'], override=True,
                        const=True, return_type=types.Type('int'),
                        body=('auto& result = *mock.bar().call(std::forward<int>(a0));\n'
-                             'return std::forward<int>(::drmock::moveIfNotCopyConstructible(result));'))]),
+                             'return std::forward<int>(::drmock::move_if_not_copy_constructible(result));'))]),
         ([types.Method(name='operator<=', params=[types.Type('int'), types.Type('int')],
                        return_type=types.Type('bool'), body='...', virtual=True)],
          [types.Method(name='operator<=', params=['int a0', 'int a1'],
                        return_type=types.Type('bool'), override=True,
                        body=('auto& result = *mock.operatorLesserOrEqual().call(std::forward<int>(a0), std::forward<int>(a1));\n'
-                             'return std::forward<bool>(::drmock::moveIfNotCopyConstructible(result));'))]),
+                             'return std::forward<bool>(::drmock::move_if_not_copy_constructible(result));'))]),
         ([types.Method(name='bar', return_type=types.Type('void'),
                        const=False,
                        volatile=False),
@@ -292,14 +292,14 @@ class TestOverload:
                        params=['int a0', 'const float & a1', 'std::vector<double> && a2'],
                        override=True,
                        body=('auto& result = *mock.template foo<int, const float &, std::vector<double> &&>().call(std::forward<int>(a0), std::forward<const float &>(a1), std::forward<std::vector<double> &&>(a2));\n'
-                             'return std::forward<int &>(::drmock::moveIfNotCopyConstructible(result));')),
+                             'return std::forward<int &>(::drmock::move_if_not_copy_constructible(result));')),
           types.Method(name='foo',
                        const=True,
                        return_type=types.Type.from_spelling('const int &'),
                        params=['const float & a0', 'Ts && ... a1'],
                        override=True,
                        body=('auto& result = *mock.template foo<const float &, Ts && ..., ::drmock::Const>().call(std::forward<const float &>(a0), std::forward<Ts && >(a1)...);\n'
-                             'return std::forward<const int &>(::drmock::moveIfNotCopyConstructible(result));'))]),
+                             'return std::forward<const int &>(::drmock::move_if_not_copy_constructible(result));'))]),
     ])
     def test_generate_mock_implementations(self, methods, expected):
         collection = overload.Overload(None, methods)
