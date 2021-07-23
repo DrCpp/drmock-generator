@@ -99,10 +99,10 @@ def _main_impl(args: str, input_header: str) -> tuple[str, str]:
     translator.set_library_file(args.clang_library_file)
     root = translator.translate(args.input_path, input_header, args.flags)
     node, enclosing_namespace = root.find_matching_class(args.input_class)
-
-    if not node:
+    if node is None:
         raise utils.DrMockRuntimeError(
             f"No class matching '{args.input_class}' found in {args.input_path}")
+
     class_ = types.Class.from_node(node)
     class_.enclosing_namespace = enclosing_namespace
 

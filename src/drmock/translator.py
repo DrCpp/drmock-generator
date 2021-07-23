@@ -63,7 +63,7 @@ class Node:
     def find_matching_class(self,
                             regex: str,
                             enclosing_namespace: Optional[list[str]] = None
-                            ) -> tuple[Optional[Node], list[str]]:
+                            ) -> Union[tuple[Node, list[str]], None]:
         """Search the tree under ``self`` for a class whose name matches
         ``regex``.
 
@@ -71,6 +71,10 @@ class Node:
             regex: The regex to match the sought class' name against
             enclosing_namespace:
                 Only used for recursing, **must** not be set by the user
+
+        Returns:
+            A matching class and the enclosing namespace, or
+            ``(None, [])`` if there is no match
         """
         if not enclosing_namespace:
             enclosing_namespace = []
@@ -78,7 +82,9 @@ class Node:
         for each in self.get_children():
             if each.cursor.kind == clang.cindex.CursorKind.NAMESPACE:
                 enclosing_namespace.append(each.cursor.displayname)
-                return each.find_matching_class(regex, enclosing_namespace)
+                class_, namespace = each.find_matching_class(regex, enclosing_namespace)
+                if class_ is not None:
+                    return class_, namespace
                 enclosing_namespace.pop()  # Remove namespace upon leaving the node!
             if each.cursor.kind in CLASS_CURSORS and re.match(regex, each.cursor.spelling):
                 return each, enclosing_namespace
