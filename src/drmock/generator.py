@@ -143,10 +143,12 @@ def _generate_header(class_: types.Class,
     # If explicit instantiations are allowed, declare them in the .h and
     # define them in the .cpp.
     if class_.explicit_instantiation_allowed():
-        # Use set in order to discard duplicates (which occur if methods
-        # have cv-qualified overloads with the same signature, for example).
-        method_templates = {_generate_method_template(class_.full_name(), each)
-                            for each in class_.get_virtual_methods()}
+        # Discard duplicates (which occur if methods have cv-qualified
+        # overloads with the same signature, for example).
+        method_templates = utils.filter_duplicates(
+            [_generate_method_template(class_.full_name(), each)
+             for each in class_.get_virtual_methods()]
+        )
         result += '\n'.join(_explicit_instantiation_decl(each) for each in method_templates)
         result += '\n'
 
@@ -172,10 +174,12 @@ def _generate_source(class_: types.Class, header_path: str) -> str:
     """
     result = ''
     if class_.explicit_instantiation_allowed():
-        # Use set in order to discard duplicates (which occur if methods
-        # have cv-qualified overloads with the same signature, for example).
-        method_templates = {_generate_method_template(class_.full_name(), each)
-                            for each in class_.get_virtual_methods()}
+        # Discard duplicates (which occur if methods have cv-qualified
+        # overloads with the same signature, for example).
+        method_templates = utils.filter_duplicates(
+            [_generate_method_template(class_.full_name(), each)
+             for each in class_.get_virtual_methods()]
+        )
         result += _include_quotes(header_path)
         result += '\n'
         result += '\n'.join(_explicit_instantiation_definition(each)
