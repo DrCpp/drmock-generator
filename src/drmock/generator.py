@@ -136,6 +136,7 @@ def _generate_header(class_: types.Class,
     result += _include_guard_open(class_.name)
     result += '\n'
 
+    result += '#define DRMOCK\n'
     result += _include_angled_brackets(DRMOCK_INCLUDE_PATH + 'Mock.h')
     result += _include_quotes(os.path.abspath(input_path))
     result += '\n'
