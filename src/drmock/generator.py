@@ -15,14 +15,13 @@ from drmock import types
 from drmock import translator
 from drmock import utils
 
-MOCK_OBJECT_PREFIX = 'DRMOCK_Object_'
-MOCK_OBJECT_ENCLOSING_NAMESPACE = ('drmock', 'mock_implementation')
-METHOD_COLLECTION_NAME = 'methods'
-METHOD_CPP_CLASS = 'drmock::Method'
-INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS_'
+MOCK_OBJECT_PREFIX = 'DRMOCK_OBJECT'
+CONTROLLER_CPP_CLASS = '::drmock::Controller'
+METHOD_CPP_CLASS = '::drmock::Method'
+INCLUDE_GUARD_PREFIX = 'DRMOCK_MOCK_IMPLEMENTATIONS'
 DRMOCK_INCLUDE_PATH = 'DrMock/'
 MACRO_PREFIX = 'DRMOCK_'
-FORWARDING_CTOR_TEMPLATE_PARAMS = MACRO_PREFIX + '_FORWARDING_CTOR_TS'
+FORWARDING_CTOR_TEMPLATE_PARAMS = MACRO_PREFIX + 'FORWARDING_CTOR_TS'
 
 
 def main(args) -> None:
@@ -100,18 +99,18 @@ def _main_impl(args: str, input_header: str) -> tuple[str, str]:
     translator.set_library_file(args.clang_library_file)
     root = translator.translate(args.input_path, input_header, args.flags)
     node, enclosing_namespace = root.find_matching_class(args.input_class)
-
-    if not node:
+    if node is None:
         raise utils.DrMockRuntimeError(
             f"No class matching '{args.input_class}' found in {args.input_path}")
+
     class_ = types.Class.from_node(node)
     class_.enclosing_namespace = enclosing_namespace
 
     mock_implementation_name = utils.swap(args.input_class, args.output_class, class_.name)
 
-    mock_object = _generate_mock_object(class_, args.access)
+    mock_object = _generate_mock_object(class_, args.access, args.namespace, args.controller)
     mock_implementation = _generate_mock_implementation(
-        mock_implementation_name, class_, args.access)
+        mock_implementation_name, class_, args.access, args.namespace)
 
     new_header = _generate_header(class_, mock_object, mock_implementation, args.input_path)
     new_source = _generate_source(class_, args.output_path)
@@ -137,6 +136,7 @@ def _generate_header(class_: types.Class,
     result += _include_guard_open(class_.name)
     result += '\n'
 
+    result += '#define DRMOCK\n'
     result += _include_angled_brackets(DRMOCK_INCLUDE_PATH + 'Mock.h')
     result += _include_quotes(os.path.abspath(input_path))
     result += '\n'
@@ -144,10 +144,12 @@ def _generate_header(class_: types.Class,
     # If explicit instantiations are allowed, declare them in the .h and
     # define them in the .cpp.
     if class_.explicit_instantiation_allowed():
-        # Use set in order to discard duplicates (which occur if methods
-        # have cv-qualified overloads with the same signature, for example).
-        method_templates = {_generate_method_template(class_.full_name(), each)
-                            for each in class_.get_virtual_methods()}
+        # Discard duplicates (which occur if methods have cv-qualified
+        # overloads with the same signature, for example).
+        method_templates = utils.filter_duplicates(
+            [_generate_method_template(class_.full_name(), each)
+             for each in class_.get_virtual_methods()]
+        )
         result += '\n'.join(_explicit_instantiation_decl(each) for each in method_templates)
         result += '\n'
 
@@ -173,10 +175,12 @@ def _generate_source(class_: types.Class, header_path: str) -> str:
     """
     result = ''
     if class_.explicit_instantiation_allowed():
-        # Use set in order to discard duplicates (which occur if methods
-        # have cv-qualified overloads with the same signature, for example).
-        method_templates = {_generate_method_template(class_.full_name(), each)
-                            for each in class_.get_virtual_methods()}
+        # Discard duplicates (which occur if methods have cv-qualified
+        # overloads with the same signature, for example).
+        method_templates = utils.filter_duplicates(
+            [_generate_method_template(class_.full_name(), each)
+             for each in class_.get_virtual_methods()]
+        )
         result += _include_quotes(header_path)
         result += '\n'
         result += '\n'.join(_explicit_instantiation_definition(each)
@@ -186,16 +190,24 @@ def _generate_source(class_: types.Class, header_path: str) -> str:
     return result
 
 
-def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class:
+def _generate_mock_object(class_: types.Class,
+                          access: list[str],
+                          namespace: str,
+                          controller: str) -> types.Class:
     """Generate the ``types.Class`` object of the mock object.
 
     Args:
         class_:
             The mocked class (not the mock object/implementation class!)
         access: Only mock methods with these access specifiers
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
+        controller:
+            The name of the diagnostics class
     """
     result = types.Class(_generate_mock_object_class_name(class_))
-    result.enclosing_namespace = MOCK_OBJECT_ENCLOSING_NAMESPACE
+    result.enclosing_namespace = _generate_enclosing_namespace(class_, namespace)
     result.template = class_.template
     overloads = overload.get_overloads_of_class(class_, access)
 
@@ -209,18 +221,21 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
     # NOTE State object must be default initialized _before_ the
     # shared_ptrs, so it must occur above them in the member list.
     state_object = types.Variable(
-        overload.STATE_OBJECT_NAME, 'std::shared_ptr<StateObject>',
-        ['std::make_shared<StateObject>()'], access='private')
+        overload.STATE_OBJECT_NAME, 'std::shared_ptr<::drmock::StateObject>',
+        ['std::make_shared<::drmock::StateObject>()'], access='private')
     result.members.append(state_object)
 
     shared_ptrs = sum([each.generate_shared_ptrs() for each in overloads], [])
     result.members += shared_ptrs
 
     method_collection = types.Variable(
-        name=METHOD_COLLECTION_NAME,
-        type='MethodCollection',
-        default_args=['{' + ', '.join(each.name for each in shared_ptrs) + '}'],
-        access='private')
+        name=controller,
+        type=CONTROLLER_CPP_CLASS,
+        default_args=[
+            '{' + ', '.join(each.name for each in shared_ptrs) + '}',
+            overload.STATE_OBJECT_NAME
+        ],
+        access='public')
     result.members.append(method_collection)
 
     # NOTE It's important to add the dispatch methods _before_ the
@@ -229,34 +244,6 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
     # function 'f_dispatch' with # deduced return type cannot be used
     # before it is defined
     result.members += sum([each.generate_dispatch_methods() for each in overloads], [])
-
-    verify_state1 = types.Method(
-        name='verifyState',
-        return_type='bool',
-        params=['const std::string& state'],
-        body=f'return {overload.STATE_OBJECT_NAME}->get() == state;')
-    verify_state2 = types.Method(
-        name='verifyState',
-        return_type='bool',
-        params=['const std::string& slot', 'const std::string& state'],
-        body=f'return {overload.STATE_OBJECT_NAME}->get(slot) == state;')
-    result.members.append(verify_state1)
-    result.members.append(verify_state2)
-
-    make_formatted_error_string = types.Method(
-        name='makeFormattedErrorString',
-        return_type='std::string',
-        const=True,
-        params=[],
-        body='return methods.makeFormattedErrorString();')
-    result.members.append(make_formatted_error_string)
-
-    verify = types.Method(
-        name='verify',
-        return_type='bool',
-        body=f'return {METHOD_COLLECTION_NAME}.verify();')
-    result.members.append(verify)
-
     result.members += [each.generate_getter() for each in overloads]
 
     return result
@@ -264,7 +251,8 @@ def _generate_mock_object(class_: types.Class, access: list[str]) -> types.Class
 
 def _generate_mock_implementation(name: str,
                                   class_: types.Class,
-                                  access: list[str]) -> types.Class:
+                                  access: list[str],
+                                  namespace: str) -> types.Class:
     """Generate the ``types.Class`` object of the mock implementation.
 
     Args:
@@ -272,13 +260,16 @@ def _generate_mock_implementation(name: str,
         class_:
             The mocked class (not the mock object/implementation class!)
         access: Only mock methods with these access specifiers
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
     """
     result = types.Class(name)
-    result.enclosing_namespace = class_.enclosing_namespace
+    result.enclosing_namespace = _generate_enclosing_namespace(class_, namespace)
     result.template = class_.template
     result.q_object = class_.q_object
     result.parent = class_.full_name()
-    result.final = True
+    # result.final = True
 
     result.members = class_.get_type_aliases()
 
@@ -296,7 +287,7 @@ def _generate_mock_implementation(name: str,
 
     mock_implementation = types.Variable(
         name=overload.MOCK_OBJECT_NAME,
-        type=_generate_mock_object_full_class_name(class_),
+        type=_generate_mock_object_full_class_name(class_, namespace),
         mutable=True)
     result.members.append(mock_implementation)
 
@@ -361,17 +352,40 @@ def _generate_mock_object_class_name(class_: types.Class) -> str:
     return MOCK_OBJECT_PREFIX + class_.name
 
 
-def _generate_mock_object_full_class_name(class_: types.Class):
+def _generate_mock_object_full_class_name(class_: types.Class, namespace: str):
     """Generate the mock object's name including namespace specifiers
     and template params.
 
     Args:
         class_:
             The mocked class (not the mock object/implementation class!)
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
     """
     result = ''
-    result += ''.join(each + '::' for each in MOCK_OBJECT_ENCLOSING_NAMESPACE)
+    result += ''.join(each + '::' for each in _generate_enclosing_namespace(class_, namespace))
     result += _generate_mock_object_class_name(class_)
     if class_.template:
         result += utils.template(class_.template.get_args())
     return result
+
+
+def _generate_enclosing_namespace(class_: types.Class, namespace: str) -> list[str]:
+    """Generate the enclosing namespace of mock object and
+    implementation.
+
+    Args:
+        class_:
+            The mocked class (not the mock object/implementation class!)
+        namespace:
+            The absolute or relative enclosing namespace for the mock
+            object/implementation class
+
+    (An absolute namespace is specified using a leading `'::'`.)
+    """
+    if not namespace:
+        return class_.enclosing_namespace[:]
+    if namespace.startswith('::'):
+        return namespace.split('::')
+    return class_.enclosing_namespace + namespace.split('::')

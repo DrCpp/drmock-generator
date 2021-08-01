@@ -30,7 +30,10 @@ _parser = argparse.ArgumentParser(
 
         The clang-library-file parameter must either be specified using
         the command line interface, or by setting the CLANG_LIBRARY_FILE
-        environment variable.'''))
+        environment variable.
+
+        Use leading :: with -n to specify a global namespace. Otherwise, the namespace is relative to the enclosing namespace of the target class.
+        '''))
 _parser.add_argument('input_path',
                      help='path to .h file containing the input class')
 _parser.add_argument('output_path',
@@ -45,14 +48,17 @@ _parser.add_argument('--output-class', '-o', default=r'Mock\1',
 # Mock all public virtual functions by default, unless -a=private
 _parser.add_argument('--access', '-a', default=['public', 'protected', 'private'],
                      help='only mock virtual functions with the specified access specs')
-_parser.add_argument('--flags', '-f', nargs=argparse.REMAINDER, default=[], help='the C++ compiler flags')
+_parser.add_argument('--flags', '-f', nargs=argparse.REMAINDER, default=[],
+                     help='the C++ compiler flags')
+_parser.add_argument('--namespace', '-n', default='', help='namespace for mock implementation')
 # # Mock a selection of virtual functions if -m/--methods=
 # _parser.add_argument('--methods', '-m', default=[],
 #                      help='only mock specified virtual functions')
-
 _parser.add_argument('--clang-library-file', '-l',
                      default=os.environ.get('CLANG_LIBRARY_FILE', None),
                      help='path to the libclang .dll/.so/.dylib')
+_parser.add_argument('--controller', '-c', default='control',
+                     help='name of controller/diagnostics member')
 
 
 def parse_args(args: list[str]) -> argparse.Namespace:

@@ -60,25 +60,29 @@ class Node:
         """Get the cursor's tokens."""
         return [each.spelling for each in self._cursor.get_tokens()]
 
-    def find_matching_class(self,
-                            regex: str,
-                            enclosing_namespace: Optional[list[str]] = None
-                            ) -> tuple[Optional[Node], list[str]]:
+    def find_matching_class(self, regex: str) -> Union[tuple[Optional[Node], list[str]]]:
         """Search the tree under ``self`` for a class whose name matches
         ``regex``.
 
         Args:
             regex: The regex to match the sought class' name against
-            enclosing_namespace:
-                Only used for recursing, **must** not be set by the user
-        """
-        if not enclosing_namespace:
-            enclosing_namespace = []
 
+        Returns:
+            A matching class and the enclosing namespace, or
+            ``(None, [])`` if there is no match
+        """
+        return self._find_matching_class_impl(regex, [])
+
+    def _find_matching_class_impl(self,
+                                  regex: str,
+                                  enclosing_namespace: list[str]
+                                  ) -> Union[tuple[Optional[Node], list[str]]]:
         for each in self.get_children():
             if each.cursor.kind == clang.cindex.CursorKind.NAMESPACE:
                 enclosing_namespace.append(each.cursor.displayname)
-                return each.find_matching_class(regex, enclosing_namespace)
+                class_, namespace = each._find_matching_class_impl(regex, enclosing_namespace)
+                if class_ is not None:
+                    return class_, namespace
                 enclosing_namespace.pop()  # Remove namespace upon leaving the node!
             if each.cursor.kind in CLASS_CURSORS and re.match(regex, each.cursor.spelling):
                 return each, enclosing_namespace

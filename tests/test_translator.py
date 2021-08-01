@@ -33,7 +33,13 @@ class TestNode:
     # result in unreadable tests which verify too much imperative and
     # too little function.
     def test_find_matching_class(self, set_library_file):
-        source = ('namespace outer {\n'
+        source = ('namespace decoy {\n'
+                  '\n'
+                  'class Foo {};\n'
+                  '\n'
+                  '} // namespace decoy\n'
+                  '\n'
+                  'namespace outer {\n'
                   '\n'
                   'class A {};\n'
                   '\n'

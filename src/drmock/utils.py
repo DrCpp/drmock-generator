@@ -64,6 +64,11 @@ def split_by_condition(pred, seq: Sequence[_T]) -> list[list[_T]]:
     return [[each for each in seq if pred(each) == val] for val in values]
 
 
+def filter_duplicates(it: Iterator[_T]) -> list[_T]:
+    """Collect items of iterator without duplicates."""
+    return list(dict.fromkeys(it))
+
+
 def indent(value: str, depth: int = 1, width: int = INDENT_WIDTH) -> str:
     """Indent a string according to depth.
 
