@@ -55,6 +55,11 @@ C:\Program Files\LLVM\bin\libclang.dll                       (on Windows using c
 /Library/Developer/CommandLineTools/usr/lib/libclang.dylib   (on macOS)
 ```
 
+On Windows, if you have trouble including STL headers, you may need to
+set the environment variable `DRMOCK_GENERATOR_INCLUDE` to the directory
+which contains the C++ headers. `drmock-generator` will then add an
+automatics `-I%DRMOCK_GENERATOR_INCLUDE%` flags to the compiler call.
+
 
 ## Testing
 

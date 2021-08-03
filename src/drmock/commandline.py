@@ -75,6 +75,11 @@ def parse_args(args: list[str]) -> argparse.Namespace:
         args.flags.append('-isysroot')
         args.flags.append(sdk)
 
+    include = os.environ.get('DRMOCK_GENERATOR_INCLUDE', None)
+    if include is not None:
+        args.flags.append('-I')
+        args.flags.append(include)
+
     return args
 
 
