@@ -32,7 +32,9 @@ _parser = argparse.ArgumentParser(
         the command line interface, or by setting the CLANG_LIBRARY_FILE
         environment variable.
 
-        Use leading :: with -n to specify a global namespace. Otherwise, the namespace is relative to the enclosing namespace of the target class.
+        Use leading :: with -n to specify a global namespace. Otherwise,
+        the namespace is relative to the enclosing namespace of the
+        target class.
         '''))
 _parser.add_argument('input_path',
                      help='path to .h file containing the input class')
