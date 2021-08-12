@@ -20,21 +20,22 @@ _parser = argparse.ArgumentParser(
     description='Create mock object .h and .cpp files',
     formatter_class=argparse.RawTextHelpFormatter,
     epilog=textwrap.dedent('''
-        The .cpp file is saved in the same directory as the .h file.
+The .cpp file is saved in the same directory as the .h file.
 
-        The input-class and output-class arguments may be regular
-        expressions. input-class must match a class in input-path; if
-        multiple matches are found, the first is chosen. output-class
-        may contain a backreference (\\1) to a capture group in
-        input-class.
+Always use --flags last! (Due to the fact that some compiler options
+start with --.)
 
-        The clang-library-file parameter must either be specified using
-        the command line interface, or by setting the CLANG_LIBRARY_FILE
-        environment variable.
+The input-class and output-class arguments may be regular expressions.
+input-class must match a class in input-path; if multiple matches are
+found, the first is chosen. output-class may contain a backreference
+(\\1) to a capture group in input-class.
 
-        Use leading :: with -n to specify a global namespace. Otherwise,
-        the namespace is relative to the enclosing namespace of the
-        target class.
+The clang-library-file parameter must either be specified using the
+command line interface, or by setting the CLANG_LIBRARY_FILE environment
+variable.
+
+Use leading :: with -n to specify a global namespace. Otherwise, the
+namespace is relative to the enclosing namespace of the target class.
         '''))
 _parser.add_argument('input_path',
                      help='path to .h file containing the input class')
@@ -50,8 +51,6 @@ _parser.add_argument('--output-class', '-o', default=r'Mock\1',
 # Mock all public virtual functions by default, unless -a=private
 _parser.add_argument('--access', '-a', default=['public', 'protected', 'private'],
                      help='only mock virtual functions with the specified access specs')
-_parser.add_argument('--flags', '-f', nargs=argparse.REMAINDER, default=[],
-                     help='the C++ compiler flags')
 _parser.add_argument('--namespace', '-n', default='', help='namespace for mock implementation')
 # # Mock a selection of virtual functions if -m/--methods=
 # _parser.add_argument('--methods', '-m', default=[],
@@ -61,6 +60,8 @@ _parser.add_argument('--clang-library-file', '-l',
                      help='path to the libclang .dll/.so/.dylib')
 _parser.add_argument('--controller', '-c', default='control',
                      help='name of controller/diagnostics member')
+_parser.add_argument('--flags', '-f', nargs=argparse.REMAINDER, default=[],
+                     help='the C++ compiler flags')
 
 
 def parse_args(args: list[str]) -> argparse.Namespace:
