@@ -80,5 +80,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Developer notes
 
 Details on the interface implemented by output code of `drmock-generator` is
-compliant with the specification of the C++ framework. See the
-documentation of the main framework for details.
+compliant with
+[DrMock specification](https://github.com/DrCpp/DrMock/blob/master/docs/spec.md)
+of the C++ framework.
