@@ -12,7 +12,7 @@ from drmock import generator
 from drmock import utils
 
 
-def test_example(script_runner):
+def test_snapshot(script_runner):
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "example_mock.h")
         ret = script_runner.run(
@@ -29,7 +29,12 @@ def test_example(script_runner):
             "ctrl",
             "-f --std=c++17",
         )
+        with open(path, "r") as f:
+            result = f.read()
+        with open("resources/example_mock.h") as f:
+            expected = f.read()
     assert ret.success
+    assert result == expected
 
 
 def test_success(monkeypatch, mocker, script_runner):
