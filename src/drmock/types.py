@@ -33,38 +33,40 @@ for example ``<=>`` is replaced _before_ ``<=`` to ensure that
 ``operator<=>`` becomes ``operatorSpaceship`` instead of
 ``operatorLesserOrEqualGreater``.
 """
-_OPERATOR_SYMBOLS = collections.OrderedDict([
-    ('<=>', 'SpaceShip'),
-    ('->*', 'PointerToMember'),
-    ('co_await', 'CoAwait'),
-    ('==', 'Equal'),
-    ('!=', 'NotEqual'),
-    ('<=', 'LesserOrEqual'),
-    ('>=', 'GreaterOrEqual'),
-    ('<<', 'StreamLeft'),
-    ('>>', 'StreamRight'),
-    ('&&', 'And'),
-    ('||', 'Or'),
-    ('++', 'Increment'),
-    ('--', 'Decrement'),
-    ('->', 'Arrow'),
-    ('()', 'Call'),
-    ('[]', 'Brackets'),
-    ('+', 'Plus'),
-    ('-', 'Minus'),
-    ('*', 'Ast'),
-    ('/', 'Div'),
-    ('%', 'Modulo'),
-    ('^', 'Caret'),
-    ('&', 'Amp'),
-    ('|', 'Pipe'),
-    ('~', 'Tilde'),
-    ('!', 'Not'),
-    ('=', 'Assign'),
-    ('<', 'Lesser'),
-    ('>', 'Greater'),
-    (',', 'Comma'),
-])
+_OPERATOR_SYMBOLS = collections.OrderedDict(
+    [
+        ("<=>", "SpaceShip"),
+        ("->*", "PointerToMember"),
+        ("co_await", "CoAwait"),
+        ("==", "Equal"),
+        ("!=", "NotEqual"),
+        ("<=", "LesserOrEqual"),
+        (">=", "GreaterOrEqual"),
+        ("<<", "StreamLeft"),
+        (">>", "StreamRight"),
+        ("&&", "And"),
+        ("||", "Or"),
+        ("++", "Increment"),
+        ("--", "Decrement"),
+        ("->", "Arrow"),
+        ("()", "Call"),
+        ("[]", "Brackets"),
+        ("+", "Plus"),
+        ("-", "Minus"),
+        ("*", "Ast"),
+        ("/", "Div"),
+        ("%", "Modulo"),
+        ("^", "Caret"),
+        ("&", "Amp"),
+        ("|", "Pipe"),
+        ("~", "Tilde"),
+        ("!", "Not"),
+        ("=", "Assign"),
+        ("<", "Lesser"),
+        (">", "Greater"),
+        (",", "Comma"),
+    ]
+)
 
 
 def from_node(node: translator.Node) -> Any:
@@ -80,7 +82,7 @@ def from_node(node: translator.Node) -> Any:
     Raises:
         ValueError: If the appropriate class cannot be determined
     """
-    if not hasattr(from_node, '_DISPATCH'):
+    if not hasattr(from_node, "_DISPATCH"):
         from_node._DISPATCH = {
             clang.cindex.CursorKind.PARM_DECL: Type,
             clang.cindex.CursorKind.CXX_METHOD: Method,
@@ -90,8 +92,10 @@ def from_node(node: translator.Node) -> Any:
     cursor = node.cursor
     type_ = from_node._DISPATCH.get(cursor.kind, None)
     if not type_:
-        keys = ', '.join(each.cursor.kind.name for each in from_node._DISPATCH)
-        raise ValueError(f'Invalid CursorKind. Expected: {keys}; received: {cursor.kind.name}')
+        keys = ", ".join(each.cursor.kind.name for each in from_node._DISPATCH)
+        raise ValueError(
+            f"Invalid CursorKind. Expected: {keys}; received: {cursor.kind.name}"
+        )
     return type_.from_node(node)
 
 
@@ -112,6 +116,7 @@ class Type:
     >>> type_ = Type('int')
     >>> naked = Type(type_)  # Represents same type, but with naked first layer
     """
+
     inner: Union[str, Type]
     const: bool = False
     volatile: bool = False
@@ -142,7 +147,9 @@ class Type:
         else:
             result.const = False
             result.volatile = False
-        result = result._get_simplified()  # If ``result`` was a reference, it's now naked.
+        result = (
+            result._get_simplified()
+        )  # If ``result`` was a reference, it's now naked.
         return result
 
     def _get_simplified(self, first_pass: bool = True) -> Type:
@@ -178,17 +185,23 @@ class Type:
 
     def _is_naked(self) -> bool:
         """Check if ``self`` is naked."""
-        return (not self.const and not self.volatile and not self.lvalue_ref and
-                not self.rvalue_ref and not self.pointer and not self.parameter_pack)
+        return (
+            not self.const
+            and not self.volatile
+            and not self.lvalue_ref
+            and not self.rvalue_ref
+            and not self.pointer
+            and not self.parameter_pack
+        )
 
     def __str__(self):
         result = str(self.inner)
-        result += self.lvalue_ref * ' &' + self.rvalue_ref * ' &&'
+        result += self.lvalue_ref * " &" + self.rvalue_ref * " &&"
         if self.pointer:
-            result += ' *' + self.const * ' const' + self.volatile * ' volatile'
+            result += " *" + self.const * " const" + self.volatile * " volatile"
         else:
-            result = self.const * 'const ' + self.volatile * 'volatile ' + result
-        result += self.parameter_pack * ' ...'
+            result = self.const * "const " + self.volatile * "volatile " + result
+        result += self.parameter_pack * " ..."
         return result
 
     @classmethod
@@ -253,7 +266,7 @@ class Type:
         # Check for variable name or parameter pack and call ``from_tokens``.
         tokens = node.get_tokens()  # ['const', 'T', '&', '...', 'foo']
         var = node.cursor.spelling  # 'foo'
-        if var != '' and tokens[-1] == var:  # Remove variable/parameter name.
+        if var != "" and tokens[-1] == var:  # Remove variable/parameter name.
             tokens.pop()
         result = cls.from_tokens(tokens)
         # In some cases (e.g. ``const T*const``), the outer const is not
@@ -265,28 +278,28 @@ class Type:
     @classmethod
     def from_tokens(cls, tokens: Sequence[str]) -> Type:
         """Create a ``Type`` instance from a sequence of tokens."""
-        t = cls('T')  # Use temporary inner name to init ``t``.
+        t = cls("T")  # Use temporary inner name to init ``t``.
 
         # Read from the right.
         while True:
-            if tokens[-1] == 'const':
+            if tokens[-1] == "const":
                 t.const = True
                 tokens.pop()
-            elif tokens[-1] == 'volatile':
+            elif tokens[-1] == "volatile":
                 t.volatile = True
                 tokens.pop()
-            elif tokens[-1] == '...':
+            elif tokens[-1] == "...":
                 t.parameter_pack = True
                 tokens.pop()
-            elif tokens[-1] == '*':
+            elif tokens[-1] == "*":
                 t.pointer = True
                 tokens.pop()
                 break
-            elif tokens[-1] == '&':
+            elif tokens[-1] == "&":
                 t.lvalue_ref = True
                 tokens.pop()
                 break
-            elif tokens[-1] == '&&':
+            elif tokens[-1] == "&&":
                 t.rvalue_ref = True
                 tokens.pop()
                 break
@@ -302,23 +315,23 @@ class Type:
         # If ``t`` is not a pointer or a reference, then read from the
         # left.
         while True:
-            if tokens[0] == 'const':
+            if tokens[0] == "const":
                 t.const = True
                 tokens.pop(0)
-            elif tokens[0] == 'volatile':
+            elif tokens[0] == "volatile":
                 t.volatile = True
                 tokens.pop(0)
             else:
                 break
 
         # Terminate the recursion by reassembeling the remaining tokens.
-        t.inner = ' '.join(tokens)
+        t.inner = " ".join(tokens)
         return t._get_simplified()
 
     @classmethod
     def from_spelling(cls, spelling: str) -> Type:
         """Create a ``Type`` instance from a cursor spelling."""
-        tokens = spelling.split(' ')
+        tokens = spelling.split(" ")
         return cls.from_tokens(tokens)
 
 
@@ -347,9 +360,12 @@ class TemplateDecl:  # For TemplateDeclaration
         >>> decl.get_args()
         ['T', 'Ts ...']
         """
-        return [utils.swap(r'\.\.\. (.*)', r'\1 ...', each)
-                if each.startswith('...') else each
-                for each in self._params]
+        return [
+            utils.swap(r"\.\.\. (.*)", r"\1 ...", each)
+            if each.startswith("...")
+            else each
+            for each in self._params
+        ]
 
     def __eq__(self, other):
         if not isinstance(other, TemplateDecl):
@@ -357,10 +373,10 @@ class TemplateDecl:  # For TemplateDeclaration
         return self._params == other._params
 
     def __str__(self):
-        result = ''
-        result += 'template<'
-        result += ', '.join(f'typename {each}' for each in self._params)
-        result += '>'
+        result = ""
+        result += "template<"
+        result += ", ".join(f"typename {each}" for each in self._params)
+        result += ">"
         return result
 
     @classmethod
@@ -373,8 +389,10 @@ class TemplateDecl:  # For TemplateDeclaration
                 # unable to recognize variadic template parameters.
                 # Fortunately, it is possible to detect "..." using the
                 # `get_tokens()` method.
-                tokens = each.get_tokens()  # ["typename", "T"] or ["typename", "...", "Ts"]
-                name = ' '.join(tokens[1:])  # "T" or "... Ts"
+                tokens = (
+                    each.get_tokens()
+                )  # ["typename", "T"] or ["typename", "...", "Ts"]
+                name = " ".join(tokens[1:])  # "T" or "... Ts"
                 params.append(name)
         result = TemplateDecl(params)
         return result
@@ -383,20 +401,22 @@ class TemplateDecl:  # For TemplateDeclaration
 class Constructor:
     """For C++ class constructors."""
 
-    def __init__(self,
-                 name: str,
-                 params: Optional[Sequence[Union[str, Type]]] = None,
-                 template: Optional[TemplateDecl] = None,
-                 initializer_list: Optional[Sequence[str]] = None,
-                 body: str = '',
-                 access: str = 'public'):
+    def __init__(
+        self,
+        name: str,
+        params: Optional[Sequence[Union[str, Type]]] = None,
+        template: Optional[TemplateDecl] = None,
+        initializer_list: Optional[Sequence[str]] = None,
+        body: str = "",
+        access: str = "public",
+    ):
         """Args:
-            name: The ctor's name
-            params: The params
-            template: A template decl if the ctor is templated
-            initializer_list: The entries of the ctor's initializer list
-            body: The body
-            access: The access specifier of the object
+        name: The ctor's name
+        params: The params
+        template: A template decl if the ctor is templated
+        initializer_list: The entries of the ctor's initializer list
+        body: The body
+        access: The access specifier of the object
         """
         self._name = name
         if params is not None:
@@ -417,17 +437,17 @@ class Constructor:
         return self._access
 
     def __str__(self) -> str:
-        result = ''
+        result = ""
         if self._template:
-            result += str(self._template) + '\n'
+            result += str(self._template) + "\n"
         result += self._name
-        params = ', '.join(str(each) for each in self._params)
-        result += f'({params})'
+        params = ", ".join(str(each) for each in self._params)
+        result += f"({params})"
         if self._initializer_list:
-            result += ' : ' + ', '.join(self._initializer_list)
-        result += '\n{\n'
+            result += " : " + ", ".join(self._initializer_list)
+        result += "\n{\n"
         result += utils.indent(self._body)
-        result += '\n}'
+        result += "\n}"
         return result
 
 
@@ -461,9 +481,10 @@ class Method:
     describes that symbol (see ``_OPERATOR_SYMBOLS``), otherwise, the
     mangled name is the method's normal name.
     """
+
     name: str
     params: Sequence[Union[str, Type]] = dataclasses.field(default_factory=list)
-    return_type: Type = Type('void')
+    return_type: Type = Type("void")
     template: Optional[TemplateDecl] = None
     const: bool = False
     volatile: bool = False
@@ -475,7 +496,7 @@ class Method:
     noexcept: bool = False
     operator: bool = False
     body: Optional[str] = None
-    access: str = 'public'
+    access: str = "public"
 
     def mangled_name(self) -> str:
         """Return the mangled name of the method."""
@@ -485,30 +506,32 @@ class Method:
         return result
 
     def __str__(self) -> str:
-        result = ''
+        result = ""
         if self.template:
-            result += str(self.template) + '\n'
+            result += str(self.template) + "\n"
         if self.virtual:
-            result += 'virtual '
-        if self.return_type:  # This check makes sure that no ugly indentation occurs for ctors!
-            result += str(self.return_type) + ' '
+            result += "virtual "
+        if (
+            self.return_type
+        ):  # This check makes sure that no ugly indentation occurs for ctors!
+            result += str(self.return_type) + " "
         result += self.name
-        params = ', '.join(str(each) for each in self.params)
-        result += f'({params})'
-        result += self.const * ' const'
-        result += self.volatile * ' volatile'
-        result += self.lvalue * '&'
-        result += self.rvalue * '&&'
-        result += self.noexcept * ' noexcept'
-        result += self.override * ' override'  # This must always be last!
+        params = ", ".join(str(each) for each in self.params)
+        result += f"({params})"
+        result += self.const * " const"
+        result += self.volatile * " volatile"
+        result += self.lvalue * "&"
+        result += self.rvalue * "&&"
+        result += self.noexcept * " noexcept"
+        result += self.override * " override"  # This must always be last!
         if self.body:
-            result += '\n{\n'
+            result += "\n{\n"
             result += utils.indent(self.body)
-            result += '\n}'
+            result += "\n}"
         else:
             if self.pure_virtual:
-                result += ' = 0'
-            result += ';'
+                result += " = 0"
+            result += ";"
         return result
 
     @classmethod
@@ -566,16 +589,19 @@ class Method:
         # Special care must be taken when dealing with operators.
 
         f = Method(node.cursor.spelling)
-        f.params = [from_node(each) for each in node.get_children()
-                    if each.cursor.kind == clang.cindex.CursorKind.PARM_DECL]
+        f.params = [
+            from_node(each)
+            for each in node.get_children()
+            if each.cursor.kind == clang.cindex.CursorKind.PARM_DECL
+        ]
         tokens = node.get_tokens()
-        if tokens[0] == 'virtual':
+        if tokens[0] == "virtual":
             tokens.pop(0)
 
         # Check if the name of ``f`` occurs in the tokens. If not, then
         # ``f`` is an operator.
         if f.name not in tokens:
-            delim = tokens.index('operator')
+            delim = tokens.index("operator")
         else:
             delim = tokens.index(f.name)
         f.return_type = Type.from_tokens(tokens[:delim])
@@ -588,16 +614,17 @@ class Method:
         #
         # Get these tokens! (There is, apparently, no other way to check
         # for cv qualifiers using python clang.)
-        delim = max(index for index, value in enumerate(tokens)
-                    if value == ')')  # Index of last closing parens.
-        keywords = tokens[delim + 1:]
-        if 'override' in keywords:
+        delim = max(
+            index for index, value in enumerate(tokens) if value == ")"
+        )  # Index of last closing parens.
+        keywords = tokens[delim + 1 :]
+        if "override" in keywords:
             f.override = True
-        if 'volatile' in keywords:
+        if "volatile" in keywords:
             f.volatile = True
-        if '&' in keywords:
+        if "&" in keywords:
             f.lvalue = True
-        if '&&' in keywords:
+        if "&&" in keywords:
             f.rvalue = True
 
         # Const qualifiers, virtual keywords, and exception
@@ -605,11 +632,14 @@ class Method:
         f.const = node.cursor.is_const_method()
         f.virtual = node.cursor.is_virtual_method()
         f.pure_virtual = node.cursor.is_pure_virtual_method()
-        if (node.cursor.exception_specification_kind == clang.cindex.ExceptionSpecificationKind.BASIC_NOEXCEPT):  # noqa: E501
+        if (
+            node.cursor.exception_specification_kind
+            == clang.cindex.ExceptionSpecificationKind.BASIC_NOEXCEPT
+        ):  # noqa: E501
             f.noexcept = True
 
         # ``f`` is an operator, if its name matches the following regex.
-        if f.name.replace('operator', '') in _OPERATOR_SYMBOLS:
+        if f.name.replace("operator", "") in _OPERATOR_SYMBOLS:
             f.operator = True
         return f
 
@@ -627,26 +657,32 @@ class TypeAlias:
         >>> TypeAlias('Vector', 'std::vector<T>', TemplateDecl(['T']))
         # template<typename T> using Vector<T> = std::vector<T>;
     """
+
     name: str
     typedef: str
     template: Optional[TemplateDecl] = None
 
     def __str__(self):
-        result = ''
+        result = ""
         if self.template:
-            result += str(self.template) + ' '
-        result += f'using {self.name} = {str(self.typedef)};'
+            result += str(self.template) + " "
+        result += f"using {self.name} = {str(self.typedef)};"
         return result
 
     @classmethod
     def from_node(cls, node: translator.Node) -> TypeAlias:
         if node.cursor.kind == clang.cindex.CursorKind.TYPE_ALIAS_TEMPLATE_DECL:
             template = TemplateDecl.from_node(node)
-            node = next(each for each in node.get_children()
-                        if each.cursor.kind == clang.cindex.CursorKind.TYPE_ALIAS_DECL)
+            node = next(
+                each
+                for each in node.get_children()
+                if each.cursor.kind == clang.cindex.CursorKind.TYPE_ALIAS_DECL
+            )
         else:
             template = None
-        result = TypeAlias(node.cursor.spelling, node.cursor.underlying_typedef_type.spelling)
+        result = TypeAlias(
+            node.cursor.spelling, node.cursor.underlying_typedef_type.spelling
+        )
         result.template = template
         return result
 
@@ -668,10 +704,12 @@ class Class:
     classes. For example, the order of members may change during
     loading. Also, we don't check for base classes, etc.
     """
+
     name: str
     enclosing_namespace: list[str] = dataclasses.field(default_factory=list)
     members: list[Union[Constructor, Method, Variable]] = dataclasses.field(
-        default_factory=list)  # Methods, variables, type aliases!
+        default_factory=list
+    )  # Methods, variables, type aliases!
     final: bool = False
     q_object: bool = False
     # We're assuming at most one (public) base class! NOTE This does not mean
@@ -682,15 +720,17 @@ class Class:
 
     def full_name(self) -> str:
         """Return the fully qualified class name."""
-        result = ''
-        result += ''.join(each + '::' for each in self.enclosing_namespace)
+        result = ""
+        result += "".join(each + "::" for each in self.enclosing_namespace)
         result += self.name
         if self.template:
             result += utils.template(self.template.get_args())
         return result
 
     def get_virtual_methods(self) -> list[Method]:
-        return [each for each in self.members if isinstance(each, Method) and each.virtual]
+        return [
+            each for each in self.members if isinstance(each, Method) and each.virtual
+        ]
 
     def get_type_aliases(self) -> list[TypeAlias]:
         return [each for each in self.members if isinstance(each, TypeAlias)]
@@ -705,43 +745,48 @@ class Class:
         return (self.template is None) and not self.get_type_aliases()
 
     def __str__(self):
-        result = ''
+        result = ""
 
         if self.enclosing_namespace:
-            result += ' '.join('namespace ' + each + ' {' for each in self.enclosing_namespace)
-            result += '\n'
-            result += '\n'
+            result += " ".join(
+                "namespace " + each + " {" for each in self.enclosing_namespace
+            )
+            result += "\n"
+            result += "\n"
 
         if self.template:
-            result += str(self.template) + '\n'
+            result += str(self.template) + "\n"
 
-        result += 'class ' + self.name + self.final * ' final'
+        result += "class " + self.name + self.final * " final"
         if self.parent:  # If self is derived (as C++ class).
-            result += ' : public ' + self.parent
+            result += " : public " + self.parent
 
-        result += '\n'  # End class decl line.
-        result += '{\n'
+        result += "\n"  # End class decl line.
+        result += "{\n"
 
-        result += self.q_object * '  Q_OBJECT\n\n'
+        result += self.q_object * "  Q_OBJECT\n\n"
 
-        access = 'private'
+        access = "private"
         for each in self.members:
             # Observe access specifier change.
             if access != each.access:
                 access = each.access
-                result += '\n'
-                result += each.access + ':\n'
+                result += "\n"
+                result += each.access + ":\n"
 
             result += utils.indent(str(each))
-            result += '\n'
+            result += "\n"
 
-        result += '};'
+        result += "};"
 
         if self.enclosing_namespace:
-            result += '\n\n'
+            result += "\n\n"
             namespace_count = len(self.enclosing_namespace)
-            result += namespace_count * '}' + ' // namespace ' + \
-                '::'.join(self.enclosing_namespace)
+            result += (
+                namespace_count * "}"
+                + " // namespace "
+                + "::".join(self.enclosing_namespace)
+            )
 
         return result
 
@@ -767,13 +812,15 @@ class Class:
         ``Class`` object.
         """
         assert node.cursor.kind in {
-            clang.cindex.CursorKind.CLASS_DECL, clang.cindex.CursorKind.CLASS_TEMPLATE}
-        result = cls('T')  # Use temporary class name for init.
+            clang.cindex.CursorKind.CLASS_DECL,
+            clang.cindex.CursorKind.CLASS_TEMPLATE,
+        }
+        result = cls("T")  # Use temporary class name for init.
         result.name = node.cursor.spelling
         if node.cursor.kind == clang.cindex.CursorKind.CLASS_TEMPLATE:
             result.template = TemplateDecl.from_node(node)
 
-        access = 'private'
+        access = "private"
         for each in node.get_children():
             IGNORED_CURSORS = {
                 clang.cindex.CursorKind.TEMPLATE_TYPE_PARAMETER,
@@ -792,7 +839,7 @@ class Class:
                 assert tokens
                 tokens.pop(0)  # ['Q_OBJECT']
                 var = tokens.pop() if tokens else None
-                if var == 'Q_OBJECT':
+                if var == "Q_OBJECT":
                     result.q_object = True
                     continue
 
@@ -823,19 +870,20 @@ class Variable:
         mutable: Indicates if the member is mutable
         access: The member's access specifier
     """
+
     name: str
     type: Type
     default_args: Sequence[str] = dataclasses.field(default_factory=list)
     mutable: bool = False
-    access: str = 'public'
+    access: str = "public"
 
     def __str__(self):
-        result = ''
-        result += self.mutable * 'mutable '
-        result += str(self.type) + ' '
+        result = ""
+        result += self.mutable * "mutable "
+        result += str(self.type) + " "
         result += self.name
-        result += '{' + ', '.join(self.default_args) + '}'
-        result += ';'
+        result += "{" + ", ".join(self.default_args) + "}"
+        result += ";"
         return result
 
 
@@ -845,5 +893,5 @@ def _access_spec_decl_from_node(node: translator.Node) -> str:
     # Since `slots` and `signals` is #defined as empty, an empty access
     # spec decl is most likely ``signals:``.
     if not tokens:
-        return 'signals'
+        return "signals"
     return tokens[0]
