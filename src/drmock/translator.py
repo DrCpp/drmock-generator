@@ -18,19 +18,24 @@ import clang.cindex
 
 from drmock import utils
 
-DIAGNOSTIC_FORMAT_OPTIONS = (clang.cindex.Diagnostic.DisplaySourceLocation
-                           | clang.cindex.Diagnostic.DisplayColumn
-                           | clang.cindex.Diagnostic.DisplaySourceRanges
-                           | clang.cindex.Diagnostic.DisplayOption
-                           | clang.cindex.Diagnostic.DisplayCategoryId
-                           | clang.cindex.Diagnostic.DisplayCategoryName)
+DIAGNOSTIC_FORMAT_OPTIONS = (
+    clang.cindex.Diagnostic.DisplaySourceLocation
+    | clang.cindex.Diagnostic.DisplayColumn
+    | clang.cindex.Diagnostic.DisplaySourceRanges
+    | clang.cindex.Diagnostic.DisplayOption
+    | clang.cindex.Diagnostic.DisplayCategoryId
+    | clang.cindex.Diagnostic.DisplayCategoryName
+)
 
-CLASS_CURSORS = {clang.cindex.CursorKind.CLASS_DECL, clang.cindex.CursorKind.CLASS_TEMPLATE}
+CLASS_CURSORS = {
+    clang.cindex.CursorKind.CLASS_DECL,
+    clang.cindex.CursorKind.CLASS_TEMPLATE,
+}
 
 
 def set_library_file(file: str) -> None:
     """Args:
-        file: path to libclang dynamic library.
+    file: path to libclang dynamic library.
     """
     clang.cindex.Config.set_library_file(file)
 
@@ -41,8 +46,8 @@ class Node:
 
     def __init__(self, cursor: clang.cindex.Cursor, path: str) -> None:
         """Args:
-            cursor: The wrapper cursor
-            path: The file that the cursor belongs to
+        cursor: The wrapper cursor
+        path: The file that the cursor belongs to
         """
         self._cursor = cursor
         self._path = path
@@ -53,14 +58,19 @@ class Node:
 
     def get_children(self) -> list[Node]:
         """Get all children from the same file."""
-        return [Node(each, self._path) for each in self._cursor.get_children()
-                if str(each.location.file) == self._path]
+        return [
+            Node(each, self._path)
+            for each in self._cursor.get_children()
+            if str(each.location.file) == self._path
+        ]
 
     def get_tokens(self) -> list[str]:
         """Get the cursor's tokens."""
         return [each.spelling for each in self._cursor.get_tokens()]
 
-    def find_matching_class(self, regex: str) -> Union[tuple[Optional[Node], list[str]]]:
+    def find_matching_class(
+        self, regex: str
+    ) -> Union[tuple[Optional[Node], list[str]]]:
         """Search the tree under ``self`` for a class whose name matches
         ``regex``.
 
@@ -73,18 +83,21 @@ class Node:
         """
         return self._find_matching_class_impl(regex, [])
 
-    def _find_matching_class_impl(self,
-                                  regex: str,
-                                  enclosing_namespace: list[str]
-                                  ) -> Union[tuple[Optional[Node], list[str]]]:
+    def _find_matching_class_impl(
+        self, regex: str, enclosing_namespace: list[str]
+    ) -> Union[tuple[Optional[Node], list[str]]]:
         for each in self.get_children():
             if each.cursor.kind == clang.cindex.CursorKind.NAMESPACE:
                 enclosing_namespace.append(each.cursor.displayname)
-                class_, namespace = each._find_matching_class_impl(regex, enclosing_namespace)
+                class_, namespace = each._find_matching_class_impl(
+                    regex, enclosing_namespace
+                )
                 if class_ is not None:
                     return class_, namespace
                 enclosing_namespace.pop()  # Remove namespace upon leaving the node!
-            if each.cursor.kind in CLASS_CURSORS and re.match(regex, each.cursor.spelling):
+            if each.cursor.kind in CLASS_CURSORS and re.match(
+                regex, each.cursor.spelling
+            ):
                 return each, enclosing_namespace
         return None, []
 
@@ -103,12 +116,14 @@ def translate_file(path: str, compiler_flags: Optional[list[str]] = None) -> Nod
         utils.DrMockRuntimeError:
             If ``path`` is empty
     """
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         source = f.read()
     return translate(path, source, compiler_flags)
 
 
-def translate(path: str, source: str, compiler_flags: Optional[list[str]] = None) -> Node:
+def translate(
+    path: str, source: str, compiler_flags: Optional[list[str]] = None
+) -> Node:
     """Translate a string with C++ code into its AST.
 
     Args:
@@ -129,22 +144,26 @@ def translate(path: str, source: str, compiler_flags: Optional[list[str]] = None
     """
     if not path:
         raise utils.DrMockRuntimeError(
-            "translate failed: Parameter 'path' is empty. Expected non-empty string")
+            "translate failed: Parameter 'path' is empty. Expected non-empty string"
+        )
 
     if compiler_flags is None:
         compiler_flags = []
 
     index = clang.cindex.Index.create()
     try:
-        tu = index.parse(path, ['-x', 'c++'] + compiler_flags, unsaved_files=[(path, source)])
+        tu = index.parse(
+            path, ["-x", "c++"] + compiler_flags, unsaved_files=[(path, source)]
+        )
     except clang.cindex.TranslationUnitLoadError as e:
         raise utils.DrMockRuntimeError(str(e))
 
     # Check for errors.
     if tu.diagnostics:
-        error = 'Clang failed. Details:\n\n'
-        error += '\n'.join('\t' + each.format(DIAGNOSTIC_FORMAT_OPTIONS)
-                           for each in tu.diagnostics)
+        error = "Clang failed. Details:\n\n"
+        error += "\n".join(
+            "\t" + each.format(DIAGNOSTIC_FORMAT_OPTIONS) for each in tu.diagnostics
+        )
         raise utils.DrMockRuntimeError(error)
 
     return Node(tu.cursor, path)

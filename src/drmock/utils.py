@@ -13,7 +13,7 @@ INDENT_WIDTH = 2
 
 def template(params: Sequence[Any]) -> str:
     """Join sequence in angled braces."""
-    return '<' + ', '.join(str(each) for each in params) + '>'
+    return "<" + ", ".join(str(each) for each in params) + ">"
 
 
 def swap(regex: str, dst: str, src: str) -> str:
@@ -30,15 +30,15 @@ def swap(regex: str, dst: str, src: str) -> str:
         >>> x = '4barfooo'
         >>> swap(regex, dst, x)  # "foobar"
     """
-    if r'\1' not in dst:
+    if r"\1" not in dst:
         return dst
 
     # Find the capture group's match; raise if there is no match.
     match = re.match(regex, src)
     if not match:
-        raise ValueError(f'{src} doesn\'t match {regex}.')
+        raise ValueError(f"{src} doesn't match {regex}.")
     inner = match.group(1)
-    result = dst.replace(r'\1', inner)
+    result = dst.replace(r"\1", inner)
     return result
 
 
@@ -78,8 +78,8 @@ def indent(value: str, depth: int = 1, width: int = INDENT_WIDTH) -> str:
         width: Indent width
     """
     result = value
-    result = depth * width * ' ' + result
-    result = result.replace('\n', '\n' + depth * width * ' ')
+    result = depth * width * " " + result
+    result = result.replace("\n", "\n" + depth * width * " ")
     return result
 
 
