@@ -3,7 +3,7 @@
 
 #define DRMOCK
 #include <DrMock/Mock.h>
-#include "/Users/malte/drmock-generator/resources/example.h"
+#include "@PATH@"
 
 namespace outer { namespace inner { namespace ns {
 

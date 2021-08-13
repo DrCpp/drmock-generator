@@ -13,6 +13,7 @@ from drmock import utils
 
 
 def test_snapshot(script_runner):
+    PATH = "resources/example.h"
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "example_mock.h")
         ret = script_runner.run(
@@ -21,7 +22,7 @@ def test_snapshot(script_runner):
             "Derived",
             "--output-class",
             "DerivedMock",
-            "resources/example.h",
+            PATH,
             str(path),
             "-n",
             "ns",
@@ -31,8 +32,9 @@ def test_snapshot(script_runner):
         )
         with open(path, "r") as f:
             result = f.read()
-        with open("resources/example_mock.h") as f:
-            expected = f.read()
+    with open("resources/example_mock.h") as f:
+        expected = f.read()
+        expected = expected.replace("@PATH@", os.path.abspath(PATH))
     assert ret.success
     assert result == expected
 
