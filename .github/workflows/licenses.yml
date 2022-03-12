@@ -15,9 +15,9 @@ jobs:
   reuse-lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - name: Fetch reuse
-      run: pip install reuse
-    - name: Check licenses
-      run: reuse lint
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Fetch reuse
+        run: pip install reuse
+      - name: Check licenses
+        run: reuse lint

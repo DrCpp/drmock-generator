@@ -8,28 +8,28 @@ on:
     branches: master
   pull_request:
     branches:
-    - master
-    - develop
+      - master
+      - develop
   workflow_dispatch:
 
 jobs:
   windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-      with:
-        python-version: '3.9'
-    - uses: crazy-max/ghaction-chocolatey@v1
-      with:
-        args: -h
-    - name: Fetch dependencies
-      run: choco install llvm
-    - name: Install
-      run: |
-        pip install -r requirements.txt
-        pip install .
-    - name: Tests
-      run: pytest -vv tests
-      env:
-        CLANG_LIBRARY_FILE: C:\Program Files\LLVM\bin\libclang.dll
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.x
+      - uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: -h
+      - name: Fetch dependencies
+        run: choco install llvm
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          pip install .
+      - name: Tests
+        run: pytest -vv tests
+        env:
+          CLANG_LIBRARY_FILE: C:\Program Files\LLVM\bin\libclang.dll

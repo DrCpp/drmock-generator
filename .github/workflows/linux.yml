@@ -8,25 +8,27 @@ on:
     branches: master
   pull_request:
     branches:
-    - master
-    - develop
+      - master
+      - develop
   workflow_dispatch:
 
 jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - name: Fetch dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install libclang-7-dev
-    - name: Install
-      run: |
-        pip install -r requirements.txt
-        pip install .
-    - name: Tests
-      run: pytest -vv tests/
-      env:
-        CLANG_LIBRARY_FILE: /usr/lib/llvm-7/lib/libclang.so
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.x
+      - name: Fetch dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libclang-7-dev
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          pip install .
+      - name: Tests
+        run: pytest -vv tests/
+        env:
+          CLANG_LIBRARY_FILE: /usr/lib/llvm-7/lib/libclang.so

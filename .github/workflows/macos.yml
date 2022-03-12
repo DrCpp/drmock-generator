@@ -8,21 +8,23 @@ on:
     branches: master
   pull_request:
     branches:
-    - master
-    - develop
+      - master
+      - develop
   workflow_dispatch:
 
 jobs:
   macos:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - name: Install
-      run: |
-        pip install -r requirements.txt
-        pip install .
-    - name: Tests
-      run: pytest -vv tests/
-      env:
-        CLANG_LIBRARY_FILE: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.x
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          pip install .
+      - name: Tests
+        run: pytest -vv tests/
+        env:
+          CLANG_LIBRARY_FILE: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
