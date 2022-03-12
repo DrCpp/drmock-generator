@@ -58,7 +58,7 @@ C:\Program Files\LLVM\bin\libclang.dll                       (on Windows using c
 On Windows, if you have trouble including STL headers, you may need to
 set the environment variable `DRMOCK_GENERATOR_INCLUDE` to the directory
 which contains the C++ headers. `drmock-generator` will then add an
-automatics `-I%DRMOCK_GENERATOR_INCLUDE%` flags to the compiler call.
+automatic `-I%DRMOCK_GENERATOR_INCLUDE%` flag to the compiler call.
 
 
 ## Testing
@@ -68,8 +68,8 @@ To run all tests, call `make`. The environment variable
 module.
 
 Due to the irreducible complexity of the output of `drmock-generator`, any
-significant changes *should* be tested against the latest version of
-test suite of the C++ framework, as well.
+significant changes *should* be tested against the latest version of the 
+C++ framework, as well.
 
 
 ## Contributing
